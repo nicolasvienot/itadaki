@@ -11,10 +11,14 @@
     "splash": {
       "image": "./assets/images/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#F5EFE0"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": false,
+      "infoPlist": {
+        "NSCameraUsageDescription": "Used to photograph dishes you've tried.",
+        "NSPhotoLibraryUsageDescription": "Used to attach photos to your dish check-offs."
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -30,7 +34,9 @@
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
-      "expo-router"
+      "expo-router",
+      "expo-image-picker",
+      "expo-secure-store"
     ],
     "experiments": {
       "typedRoutes": true
