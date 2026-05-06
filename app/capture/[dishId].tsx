@@ -1,8 +1,10 @@
-import { useState } from 'react';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { Image } from "expo-image";
+import * as ImagePicker from "expo-image-picker";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { useState } from "react";
 import {
   ActivityIndicator,
-  Image,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -11,18 +13,20 @@ import {
   TextInput,
   TouchableOpacity,
   View,
-} from 'react-native';
-import * as ImagePicker from 'expo-image-picker';
-import { ScreenHeader } from '../../src/components/ScreenHeader';
-import { useDestinationDetail } from '../../src/hooks/useDestinationDetail';
-import { useCheckOff } from '../../src/hooks/useCheckOff';
-import { Loader } from '../../src/components/Loader';
-import { StampAnimation } from '../../src/components/StampAnimation';
-import { StarRating } from '../../src/components/StarRating';
-import { colors, typography } from '../../src/constants/colors';
+} from "react-native";
+import { Loader } from "../../src/components/Loader";
+import { ScreenHeader } from "../../src/components/ScreenHeader";
+import { StampAnimation } from "../../src/components/StampAnimation";
+import { StarRating } from "../../src/components/StarRating";
+import { colors, numStyle, typography } from "../../src/constants/colors";
+import { useCheckOff } from "../../src/hooks/useCheckOff";
+import { useDestinationDetail } from "../../src/hooks/useDestinationDetail";
 
 export default function CaptureScreen() {
-  const { dishId, destinationId } = useLocalSearchParams<{ dishId: string; destinationId: string }>();
+  const { dishId, destinationId } = useLocalSearchParams<{
+    dishId: string;
+    destinationId: string;
+  }>();
   const router = useRouter();
   const { destination, isLoading } = useDestinationDetail(destinationId);
   const dish = destination?.dishes.find((d) => d.id === dishId);
@@ -30,12 +34,12 @@ export default function CaptureScreen() {
 
   const [photoUri, setPhotoUri] = useState<string | null>(null);
   const [rating, setRating] = useState(0);
-  const [note, setNote] = useState('');
+  const [note, setNote] = useState("");
   const [stamped, setStamped] = useState(false);
 
   const pickPhoto = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
+      mediaTypes: ["images"],
       quality: 0.8,
       allowsEditing: true,
       aspect: [4, 3],
@@ -45,7 +49,7 @@ export default function CaptureScreen() {
 
   const takePhoto = async () => {
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
-    if (status !== 'granted') return;
+    if (status !== "granted") return;
     const result = await ImagePicker.launchCameraAsync({
       quality: 0.8,
       allowsEditing: true,
@@ -77,127 +81,256 @@ export default function CaptureScreen() {
   return (
     <KeyboardAvoidingView
       style={styles.safe}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
-      <ScreenHeader title="Mark as tried" onBack={() => router.back()} />
+      <ScreenHeader
+        onBack={() => router.back()}
+        title="Check off"
+        closeIcon
+        large
+        right={
+          <TouchableOpacity
+            onPress={handleSave}
+            disabled={checkOff.isPending || stamped}
+            hitSlop={8}
+          >
+            <Text style={styles.headerSave}>Save</Text>
+          </TouchableOpacity>
+        }
+      />
 
-      <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+      <ScrollView
+        contentContainerStyle={styles.scroll}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
         <StampAnimation visible={stamped} size={140} />
 
-        <View style={styles.header}>
-          <Text style={styles.localName}>{dish.localName}</Text>
+        {/* Dish ID */}
+        <View style={styles.dishHeader}>
+          <Text style={styles.localName}>
+            {dish.localName} <Text style={styles.localNameEn}>· {dish.name}</Text>
+          </Text>
           <Text style={styles.name}>{dish.name}</Text>
         </View>
 
+        {/* Photo upload */}
         <View style={styles.photoSection}>
+          <Text style={styles.sectionLabelInset}>SNAP A PHOTO</Text>
           {photoUri ? (
             <TouchableOpacity onPress={pickPhoto} activeOpacity={0.85}>
-              <Image source={{ uri: photoUri }} style={styles.photoPreview} resizeMode="cover" />
-              <Text style={styles.changePhoto}>Change photo</Text>
+              <Image source={{ uri: photoUri }} style={styles.photoPreview} contentFit="cover" />
+              <Text style={styles.changePhoto}>Tap to change photo</Text>
             </TouchableOpacity>
           ) : (
             <View style={styles.photoButtons}>
               <TouchableOpacity style={styles.photoBtn} onPress={takePhoto} activeOpacity={0.85}>
-                <Text style={styles.photoBtnIcon}>📷</Text>
+                <MaterialCommunityIcons name="camera-outline" size={26} color={colors.inkSoft} />
                 <Text style={styles.photoBtnLabel}>Camera</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.photoBtn} onPress={pickPhoto} activeOpacity={0.85}>
-                <Text style={styles.photoBtnIcon}>🖼</Text>
+                <MaterialCommunityIcons name="image-outline" size={26} color={colors.inkSoft} />
                 <Text style={styles.photoBtnLabel}>Library</Text>
               </TouchableOpacity>
             </View>
           )}
         </View>
 
-        <View style={styles.fieldGroup}>
-          <Text style={styles.fieldLabel}>Your rating</Text>
-          <StarRating value={rating} onChange={setRating} size={40} />
+        {/* Rating */}
+        <View style={styles.fieldSection}>
+          <Text style={styles.sectionLabel}>HOW WAS IT?</Text>
+          <View style={styles.ratingCard}>
+            <StarRating value={rating} onChange={setRating} size={26} />
+            <Text style={numStyle(20)}>{rating > 0 ? rating.toFixed(1) : "—"}</Text>
+          </View>
         </View>
 
-        <View style={styles.fieldGroup}>
-          <Text style={styles.fieldLabel}>One-line note</Text>
+        {/* Note */}
+        <View style={styles.fieldSection}>
+          <Text style={styles.sectionLabel}>ONE-LINE MEMORY</Text>
           <TextInput
             style={styles.input}
             value={note}
             onChangeText={setNote}
-            placeholder="Worth the queue…"
-            placeholderTextColor={colors.mutedStone}
+            placeholder="Crispier than I expected. Worth the queue…"
+            placeholderTextColor={colors.inkMuted}
             maxLength={120}
             returnKeyType="done"
+            multiline
           />
         </View>
 
-        <TouchableOpacity
-          style={[styles.saveBtn, checkOff.isPending && styles.saveBtnDisabled]}
-          onPress={handleSave}
-          disabled={checkOff.isPending || stamped}
-          activeOpacity={0.85}
-        >
-          {checkOff.isPending ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <Text style={styles.saveBtnText}>Save Check-off</Text>
-          )}
-        </TouchableOpacity>
+        {/* Save CTA */}
+        <View style={styles.ctaWrap}>
+          <TouchableOpacity
+            style={[styles.cta, (checkOff.isPending || stamped) && styles.ctaDisabled]}
+            onPress={handleSave}
+            disabled={checkOff.isPending || stamped}
+            activeOpacity={0.9}
+          >
+            {checkOff.isPending ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={styles.ctaText}>Save check-off</Text>
+            )}
+          </TouchableOpacity>
 
-        {checkOff.isError && (
-          <Text style={styles.errorText}>Something went wrong — check your Supabase connection.</Text>
-        )}
+          {checkOff.isError && (
+            <Text style={styles.error}>
+              Something went wrong — check your Supabase connection.
+            </Text>
+          )}
+        </View>
       </ScrollView>
     </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: colors.cream },
-  scroll: { padding: 24, gap: 24, paddingBottom: 48 },
-  header: { gap: 2 },
-  localName: { fontFamily: typography.body, fontSize: 13, color: colors.terracotta },
-  name: { fontFamily: typography.serif, fontSize: 24, color: colors.inkBlack },
-  photoSection: { gap: 8 },
-  photoPreview: { width: '100%', height: 200, borderRadius: 16 },
-  changePhoto: { fontFamily: typography.body, fontSize: 12, color: colors.mutedStone, textAlign: 'center', marginTop: 8 },
-  photoButtons: { flexDirection: 'row', gap: 12 },
-  photoBtn: {
-    flex: 1,
-    height: 100,
-    backgroundColor: colors.warmWhite,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: colors.cardBorder,
-    borderStyle: 'dashed',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
+  safe: { flex: 1, backgroundColor: colors.bg },
+  headerSave: {
+    fontFamily: typography.bodySemiBold,
+    fontSize: 14,
+    color: colors.primary,
   },
-  photoBtnIcon: { fontSize: 28 },
-  photoBtnLabel: { fontFamily: typography.bodyMedium, fontSize: 12, color: colors.mutedStone },
-  fieldGroup: { gap: 12 },
-  fieldLabel: {
+  scroll: {
+    paddingTop: 8,
+    paddingBottom: 40,
+  },
+
+  // Dish title block (matches design's `0 24px 18px`)
+  dishHeader: {
+    paddingHorizontal: 24,
+    paddingBottom: 22,
+  },
+  localName: {
     fontFamily: typography.bodyMedium,
     fontSize: 13,
-    color: colors.mutedStone,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
+    color: colors.primary,
+  },
+  localNameEn: {
+    color: colors.inkMuted,
+  },
+  name: {
+    fontFamily: typography.serif,
+    fontSize: 28,
+    color: colors.ink,
+    letterSpacing: -0.4,
+    lineHeight: 32,
+    marginTop: 2,
+  },
+
+  // Photo section: cards at 16px, label at 24px (matches design)
+  photoSection: {
+    paddingHorizontal: 16,
+    paddingBottom: 18,
+  },
+  sectionLabelInset: {
+    fontFamily: typography.bodySemiBold,
+    fontSize: 11,
+    color: colors.inkSoft,
+    letterSpacing: 1.4,
+    paddingHorizontal: 8,
+    marginBottom: 10,
+  },
+  photoButtons: {
+    flexDirection: "row",
+    gap: 10,
+  },
+  photoBtn: {
+    flex: 1,
+    height: 120,
+    borderRadius: 18,
+    backgroundColor: colors.surface,
+    borderWidth: 1.5,
+    borderColor: colors.border,
+    borderStyle: "dashed",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+  },
+  photoBtnLabel: {
+    fontFamily: typography.bodyMedium,
+    fontSize: 13,
+    color: colors.inkSoft,
+  },
+  photoPreview: {
+    width: "100%",
+    height: 200,
+    borderRadius: 18,
+    backgroundColor: colors.surfaceAlt,
+  },
+  changePhoto: {
+    fontFamily: typography.body,
+    fontSize: 12,
+    color: colors.inkMuted,
+    textAlign: "center",
+    marginTop: 8,
+  },
+
+  // Rating + Note: 24px horizontal
+  fieldSection: {
+    paddingHorizontal: 24,
+    paddingBottom: 18,
+  },
+  sectionLabel: {
+    fontFamily: typography.bodySemiBold,
+    fontSize: 11,
+    color: colors.inkSoft,
+    letterSpacing: 1.4,
+    marginBottom: 10,
+  },
+  ratingCard: {
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 18,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
   },
   input: {
-    backgroundColor: colors.warmWhite,
-    borderRadius: 14,
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: colors.cardBorder,
+    borderColor: colors.border,
+    borderRadius: 18,
     paddingHorizontal: 16,
     paddingVertical: 14,
     fontFamily: typography.body,
+    fontSize: 14,
+    color: colors.ink,
+    minHeight: 56,
+  },
+
+  // CTA: 16px horizontal
+  ctaWrap: {
+    paddingHorizontal: 16,
+    paddingTop: 8,
+  },
+  cta: {
+    backgroundColor: colors.primary,
+    borderRadius: 18,
+    paddingVertical: 16,
+    alignItems: "center",
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.33,
+    shadowRadius: 20,
+    elevation: 6,
+  },
+  ctaDisabled: { opacity: 0.6 },
+  ctaText: {
+    fontFamily: typography.bodySemiBold,
     fontSize: 15,
-    color: colors.inkBlack,
+    color: "#fff",
   },
-  saveBtn: {
-    backgroundColor: colors.terracotta,
-    borderRadius: 16,
-    paddingVertical: 18,
-    alignItems: 'center',
+  error: {
+    fontFamily: typography.body,
+    fontSize: 13,
+    color: colors.errorRed,
+    textAlign: "center",
+    marginTop: 12,
   },
-  saveBtnDisabled: { opacity: 0.6 },
-  saveBtnText: { fontFamily: typography.bodyMedium, fontSize: 16, color: '#fff' },
-  errorText: { fontFamily: typography.body, fontSize: 13, color: colors.errorRed, textAlign: 'center' },
 });

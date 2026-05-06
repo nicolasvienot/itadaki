@@ -1,3 +1,4 @@
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { colors, typography } from "../constants/colors";
@@ -18,36 +19,56 @@ export function DishCard({ dish, check, onPress }: Props) {
       onPress={onPress}
       activeOpacity={0.85}
     >
-      <View style={styles.photoWrap}>
-        <Image
-          source={{ uri: dish.photoUrl }}
-          style={[styles.photo, { backgroundColor: colors.mutedStone }]}
-          contentFit="cover"
-          transition={300}
-        />
-        {tried && <View style={styles.triedOverlay} />}
-        {tried && (
-          <View style={styles.stampBadge}>
-            <Text style={styles.stampCheck}>✓</Text>
-          </View>
-        )}
-      </View>
+      <Image
+        source={{ uri: dish.photoUrl }}
+        style={[
+          styles.photo,
+          { backgroundColor: colors.surfaceAlt },
+          !tried && styles.photoUntried,
+        ]}
+        contentFit="cover"
+        transition={300}
+      />
 
       <View style={styles.info}>
-        <Text style={styles.name} numberOfLines={1}>
-          {dish.name}
-        </Text>
         <Text style={styles.localName} numberOfLines={1}>
           {dish.localName}
         </Text>
+        <Text style={styles.name} numberOfLines={1}>
+          {dish.name}
+        </Text>
+        {dish.oneLiner ? (
+          <Text style={styles.oneLiner} numberOfLines={1}>
+            {dish.oneLiner}
+          </Text>
+        ) : null}
         {tried && check?.rating != null && (
           <View style={styles.ratingRow}>
-            {Array.from({ length: check.rating }).map((_, i) => (
-              <View key={i} style={styles.starDot} />
+            {Array.from({ length: 5 }).map((_, i) => (
+              <View
+                key={i}
+                style={[
+                  styles.ratingDot,
+                  {
+                    backgroundColor:
+                      i < (check.rating ?? 0) ? colors.gold : colors.surfaceAlt,
+                  },
+                ]}
+              />
             ))}
           </View>
         )}
       </View>
+
+      {tried ? (
+        <View style={styles.triedBadge}>
+          <MaterialCommunityIcons name="check" size={16} color="#fff" />
+        </View>
+      ) : (
+        <View style={styles.untriedBadge}>
+          <MaterialCommunityIcons name="chevron-right" size={16} color={colors.inkMuted} />
+        </View>
+      )}
     </TouchableOpacity>
   );
 }
@@ -55,66 +76,70 @@ export function DishCard({ dish, check, onPress }: Props) {
 const styles = StyleSheet.create({
   card: {
     flexDirection: "row",
-    backgroundColor: colors.warmWhite,
-    borderRadius: 16,
-    overflow: "hidden",
+    alignItems: "center",
+    backgroundColor: colors.surface,
+    borderRadius: 18,
+    padding: 10,
     borderWidth: 1,
-    borderColor: colors.cardBorder,
-  },
-  photoWrap: {
-    width: 96,
-    height: 96,
+    borderColor: colors.border,
+    gap: 14,
   },
   photo: {
-    width: 96,
-    height: 96,
+    width: 70,
+    height: 70,
+    borderRadius: 14,
   },
-  triedOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(122, 140, 110, 0.35)",
-  },
-  stampBadge: {
-    position: "absolute",
-    bottom: 6,
-    right: 6,
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: colors.sageGreen,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  stampCheck: {
-    color: "#fff",
-    fontSize: 13,
-    fontWeight: "700",
-    lineHeight: 16,
+  photoUntried: {
+    opacity: 0.85,
   },
   info: {
     flex: 1,
-    padding: 14,
-    justifyContent: "center",
+    minWidth: 0,
     gap: 2,
+  },
+  localName: {
+    fontFamily: typography.bodyMedium,
+    fontSize: 11,
+    color: colors.primary,
   },
   name: {
     fontFamily: typography.serif,
-    fontSize: 15,
-    color: colors.inkBlack,
+    fontSize: 17,
+    color: colors.ink,
+    lineHeight: 20,
   },
-  localName: {
+  oneLiner: {
     fontFamily: typography.body,
     fontSize: 12,
-    color: colors.mutedStone,
+    color: colors.inkSoft,
+    marginTop: 2,
   },
   ratingRow: {
     flexDirection: "row",
     gap: 4,
-    marginTop: 4,
+    marginTop: 6,
   },
-  starDot: {
-    width: 7,
-    height: 7,
+  ratingDot: {
+    width: 8,
+    height: 8,
     borderRadius: 4,
-    backgroundColor: colors.dustyGold,
+  },
+  triedBadge: {
+    width: 32,
+    height: 32,
+    borderRadius: 32,
+    backgroundColor: colors.success,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  untriedBadge: {
+    width: 32,
+    height: 32,
+    borderRadius: 32,
+    borderWidth: 1.5,
+    borderColor: colors.border,
+    borderStyle: "dashed",
+    alignItems: "center",
+    justifyContent: "center",
   },
 });

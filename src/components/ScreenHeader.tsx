@@ -8,11 +8,31 @@ interface Props {
   title?: string;
   /** Float over content (photo screens). Default: false = in-flow cream header. */
   overlay?: boolean;
+  /** Use an X (close) icon instead of a chevron — for modal/sheet screens. */
+  closeIcon?: boolean;
+  /** Optional right slot (e.g., a "Save" link). */
+  right?: React.ReactNode;
+  /** Larger header for modal/sheet screens (more padding, serif title). */
+  large?: boolean;
 }
 
-export function ScreenHeader({ onBack, title, overlay = false }: Props) {
-  const iconColor = overlay ? colors.warmWhite : colors.inkBlack;
-  const btnBg = overlay ? "rgba(26,20,16,0.45)" : "rgba(26,20,16,0.07)";
+export function ScreenHeader({
+  onBack,
+  title,
+  overlay = false,
+  closeIcon = false,
+  right,
+  large = false,
+}: Props) {
+  const iconColor = overlay ? "#fff" : colors.ink;
+  const btnBg = overlay ? "rgba(0,0,0,0.4)" : colors.surface;
+  const borderColor = overlay ? "transparent" : colors.border;
+
+  const titleStyle = large
+    ? styles.titleLarge
+    : overlay
+    ? [styles.title, styles.titleOverlay]
+    : styles.title;
 
   return (
     <SafeAreaView
@@ -22,27 +42,32 @@ export function ScreenHeader({ onBack, title, overlay = false }: Props) {
         overlay ? styles.overlayContainer : styles.solidContainer,
       ]}
     >
-      <View style={styles.row}>
+      <View style={[styles.row, large && styles.rowLarge]}>
         <TouchableOpacity
-          style={[styles.btn, { backgroundColor: btnBg }]}
+          style={[
+            styles.btn,
+            { backgroundColor: btnBg, borderColor },
+          ]}
           onPress={onBack}
           hitSlop={8}
+          activeOpacity={0.8}
         >
           <MaterialCommunityIcons
-            name="chevron-left"
-            size={26}
+            name={closeIcon ? "close" : "chevron-left"}
+            size={closeIcon ? 18 : 22}
             color={iconColor}
           />
         </TouchableOpacity>
 
         {title ? (
-          <>
-            <Text style={styles.title} numberOfLines={1}>
-              {title}
-            </Text>
-            <View style={styles.spacer} />
-          </>
-        ) : null}
+          <Text style={titleStyle} numberOfLines={1}>
+            {title}
+          </Text>
+        ) : (
+          <View style={{ flex: 1 }} />
+        )}
+
+        <View style={styles.rightSlot}>{right ?? <View style={{ width: 38 }} />}</View>
       </View>
     </SafeAreaView>
   );
@@ -50,7 +75,7 @@ export function ScreenHeader({ onBack, title, overlay = false }: Props) {
 
 const styles = StyleSheet.create({
   safe: { width: "100%" },
-  solidContainer: { backgroundColor: colors.cream },
+  solidContainer: { backgroundColor: colors.bg },
   overlayContainer: {
     position: "absolute",
     top: 0,
@@ -61,24 +86,44 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: "row",
     alignItems: "center",
-    height: 52,
-    paddingLeft: 16,
-    paddingRight: 8,
+    height: 54,
+    paddingHorizontal: 20,
+    gap: 12,
+  },
+  rowLarge: {
+    height: 64,
+    paddingHorizontal: 24,
+    paddingTop: 12,
+    paddingBottom: 8,
   },
   btn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 38,
+    height: 38,
+    borderRadius: 38,
     alignItems: "center",
     justifyContent: "center",
+    borderWidth: 1,
   },
   title: {
     flex: 1,
-    fontFamily: typography.serif,
-    fontSize: 18,
-    color: colors.inkBlack,
+    fontFamily: typography.bodySemiBold,
+    fontSize: 14,
+    color: colors.ink,
     textAlign: "center",
-    marginHorizontal: 8,
   },
-  spacer: { width: 44 },
+  titleLarge: {
+    flex: 1,
+    fontFamily: typography.serif,
+    fontSize: 22,
+    color: colors.ink,
+    textAlign: "center",
+  },
+  titleOverlay: {
+    color: "#fff",
+  },
+  rightSlot: {
+    minWidth: 38,
+    alignItems: "flex-end",
+    justifyContent: "center",
+  },
 });

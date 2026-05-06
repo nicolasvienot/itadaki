@@ -12,11 +12,23 @@ export function BadgeGrid({ badges }: Props) {
       {badges.map((badge) => (
         <View
           key={badge.id}
-          style={[styles.item, !badge.unlocked && styles.locked]}
+          style={[styles.item, !badge.unlocked && styles.itemLocked]}
         >
-          <Text style={[styles.emoji, !badge.unlocked && styles.lockedEmoji]}>
-            {badge.unlocked ? badge.emoji : '🔒'}
-          </Text>
+          <View
+            style={[
+              styles.iconWrap,
+              {
+                backgroundColor: badge.unlocked ? colors.primary : colors.surfaceAlt,
+                borderWidth: badge.unlocked ? 0 : 1.5,
+                borderColor: colors.inkMuted,
+                borderStyle: 'dashed',
+              },
+            ]}
+          >
+            <Text style={[styles.emoji, badge.unlocked ? styles.emojiActive : null]}>
+              {badge.unlocked ? badge.emoji : '🔒'}
+            </Text>
+          </View>
           <Text style={[styles.name, !badge.unlocked && styles.lockedText]} numberOfLines={1}>
             {badge.name}
           </Text>
@@ -33,43 +45,52 @@ const styles = StyleSheet.create({
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
+    gap: 10,
   },
   item: {
-    width: '30%',
-    backgroundColor: colors.warmWhite,
-    borderRadius: 12,
+    width: '31%',
+    backgroundColor: colors.surface,
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: colors.cardBorder,
-    padding: 12,
-    gap: 2,
+    borderColor: colors.border,
+    paddingVertical: 14,
+    paddingHorizontal: 8,
+    gap: 4,
     alignItems: 'center',
-    minHeight: 90,
   },
-  locked: {
-    opacity: 0.45,
+  itemLocked: {
+    backgroundColor: colors.surfaceAlt,
+    opacity: 0.7,
+  },
+  iconWrap: {
+    width: 38,
+    height: 38,
+    borderRadius: 38,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 4,
   },
   emoji: {
-    fontSize: 24,
-    marginBottom: 2,
+    fontSize: 18,
   },
-  lockedEmoji: {
-    fontSize: 20,
+  emojiActive: {
+    color: '#fff',
   },
   name: {
-    fontFamily: typography.bodyMedium,
-    fontSize: 11,
-    color: colors.inkBlack,
+    fontFamily: typography.bodySemiBold,
+    fontSize: 12,
+    color: colors.ink,
     textAlign: 'center',
-  },
-  lockedText: {
-    color: colors.mutedStone,
+    lineHeight: 14,
   },
   desc: {
     fontFamily: typography.body,
-    fontSize: 9,
-    color: colors.mutedStone,
-    lineHeight: 12,
+    fontSize: 10,
+    color: colors.inkMuted,
     textAlign: 'center',
+    lineHeight: 12,
+  },
+  lockedText: {
+    color: colors.inkMuted,
   },
 });

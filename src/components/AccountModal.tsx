@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -10,33 +10,44 @@ import {
   TextInput,
   TouchableOpacity,
   View,
-} from 'react-native';
-import { colors, typography } from '../constants/colors';
-import { supabase } from '../lib/supabase';
+} from "react-native";
+import { colors, typography } from "../constants/colors";
+import { supabase } from "../lib/supabase";
 
-type Mode = 'create' | 'signin';
+type Mode = "create" | "signin";
 
 interface Props {
   visible: boolean;
   onClose: () => void;
   onSuccess: (mode: Mode) => void;
+  initialMode?: Mode;
 }
 
-export function AccountModal({ visible, onClose, onSuccess }: Props) {
-  const [mode, setMode] = useState<Mode>('create');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+export function AccountModal({
+  visible,
+  onClose,
+  onSuccess,
+  initialMode = "create",
+}: Props) {
+  const [mode, setMode] = useState<Mode>(initialMode);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
 
+  // Sync mode whenever the caller opens the modal with a different initial preference.
+  useEffect(() => {
+    if (visible) setMode(initialMode);
+  }, [visible, initialMode]);
+
   const reset = () => {
-    setEmail('');
-    setPassword('');
+    setEmail("");
+    setPassword("");
     setError(null);
     setLoading(false);
     setDone(false);
-    setMode('create');
+    setMode(initialMode);
   };
 
   const handleClose = () => {
@@ -50,18 +61,21 @@ export function AccountModal({ visible, onClose, onSuccess }: Props) {
     setError(null);
 
     try {
-      if (mode === 'create') {
+      if (mode === "create") {
         const { error } = await supabase.auth.updateUser({ email, password });
         if (error) throw error;
         setDone(true);
       } else {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        const { error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
         if (error) throw error;
         reset();
-        onSuccess('signin');
+        onSuccess("signin");
       }
     } catch (err: any) {
-      setError(err.message ?? 'Something went wrong');
+      setError(err.message ?? "Something went wrong");
     } finally {
       setLoading(false);
     }
@@ -76,16 +90,18 @@ export function AccountModal({ visible, onClose, onSuccess }: Props) {
     >
       <KeyboardAvoidingView
         style={styles.container}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
         <ScrollView
           contentContainerStyle={styles.scroll}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
+          <View style={styles.handle} />
+
           <View style={styles.header}>
-            <Text style={styles.title}>Account</Text>
-            <TouchableOpacity onPress={handleClose}>
+            <Text style={styles.title}>Sync</Text>
+            <TouchableOpacity onPress={handleClose} hitSlop={8}>
               <Text style={styles.cancel}>Cancel</Text>
             </TouchableOpacity>
           </View>
@@ -95,35 +111,62 @@ export function AccountModal({ visible, onClose, onSuccess }: Props) {
               <Text style={styles.successEmoji}>✉️</Text>
               <Text style={styles.successTitle}>Check your inbox</Text>
               <Text style={styles.successBody}>
-                We sent a confirmation link to {email}. Click it to activate your account — your
-                progress is already saved.
+                We sent a confirmation link to {email}. Click it to activate
+                your account — your progress is already saved.
               </Text>
-              <TouchableOpacity style={styles.btn} onPress={handleClose} activeOpacity={0.85}>
+              <TouchableOpacity
+                style={styles.btn}
+                onPress={handleClose}
+                activeOpacity={0.85}
+              >
                 <Text style={styles.btnText}>Got it</Text>
               </TouchableOpacity>
             </View>
           ) : (
             <>
               <Text style={styles.subtitle}>
-                {mode === 'create'
-                  ? 'Link an email to your account so your progress syncs across devices.'
-                  : 'Sign in to restore your progress on this device.'}
+                Link an email so your passport, photos, and notes stay safe
+                across devices. No marketing emails, ever.
               </Text>
 
               <View style={styles.segmented}>
                 <TouchableOpacity
-                  style={[styles.segment, mode === 'create' && styles.segmentActive]}
-                  onPress={() => { setMode('create'); setError(null); }}
+                  style={[
+                    styles.segment,
+                    mode === "create" && styles.segmentActive,
+                  ]}
+                  onPress={() => {
+                    setMode("create");
+                    setError(null);
+                  }}
+                  activeOpacity={0.85}
                 >
-                  <Text style={[styles.segmentText, mode === 'create' && styles.segmentTextActive]}>
+                  <Text
+                    style={[
+                      styles.segmentText,
+                      mode === "create" && styles.segmentTextActive,
+                    ]}
+                  >
                     Create account
                   </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
-                  style={[styles.segment, mode === 'signin' && styles.segmentActive]}
-                  onPress={() => { setMode('signin'); setError(null); }}
+                  style={[
+                    styles.segment,
+                    mode === "signin" && styles.segmentActive,
+                  ]}
+                  onPress={() => {
+                    setMode("signin");
+                    setError(null);
+                  }}
+                  activeOpacity={0.85}
                 >
-                  <Text style={[styles.segmentText, mode === 'signin' && styles.segmentTextActive]}>
+                  <Text
+                    style={[
+                      styles.segmentText,
+                      mode === "signin" && styles.segmentTextActive,
+                    ]}
+                  >
                     Sign in
                   </Text>
                 </TouchableOpacity>
@@ -132,8 +175,8 @@ export function AccountModal({ visible, onClose, onSuccess }: Props) {
               <View style={styles.form}>
                 <TextInput
                   style={styles.input}
-                  placeholder="Email"
-                  placeholderTextColor={colors.mutedStone}
+                  placeholder="you@example.com"
+                  placeholderTextColor={colors.inkMuted}
                   value={email}
                   onChangeText={setEmail}
                   keyboardType="email-address"
@@ -142,8 +185,12 @@ export function AccountModal({ visible, onClose, onSuccess }: Props) {
                 />
                 <TextInput
                   style={styles.input}
-                  placeholder="Password (min 6 characters)"
-                  placeholderTextColor={colors.mutedStone}
+                  placeholder={
+                    mode === "create"
+                      ? "Password (min 6 characters)"
+                      : "Password"
+                  }
+                  placeholderTextColor={colors.inkMuted}
                   value={password}
                   onChangeText={setPassword}
                   secureTextEntry
@@ -153,7 +200,10 @@ export function AccountModal({ visible, onClose, onSuccess }: Props) {
               {error && <Text style={styles.error}>{error}</Text>}
 
               <TouchableOpacity
-                style={[styles.btn, (loading || !email || !password) && styles.btnDisabled]}
+                style={[
+                  styles.btn,
+                  (loading || !email || !password) && styles.btnDisabled,
+                ]}
                 onPress={handleSubmit}
                 disabled={loading || !email || !password}
                 activeOpacity={0.85}
@@ -162,10 +212,20 @@ export function AccountModal({ visible, onClose, onSuccess }: Props) {
                   <ActivityIndicator color="#fff" />
                 ) : (
                   <Text style={styles.btnText}>
-                    {mode === 'create' ? 'Create account' : 'Sign in'}
+                    {mode === "create" ? "Create account" : "Sign in"}
                   </Text>
                 )}
               </TouchableOpacity>
+
+              <View style={styles.hintCard}>
+                <View style={styles.hintIcon}>
+                  <Text style={styles.hintIconText}>i</Text>
+                </View>
+                <Text style={styles.hintText}>
+                  You can keep eating without an account — your progress stays
+                  on this device until you decide to sync.
+                </Text>
+              </View>
             </>
           )}
         </ScrollView>
@@ -175,76 +235,148 @@ export function AccountModal({ visible, onClose, onSuccess }: Props) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.cream },
-  scroll: { padding: 24, gap: 24, paddingBottom: 48 },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingTop: 12,
+  container: { flex: 1, backgroundColor: colors.bg },
+  scroll: { paddingHorizontal: 24, paddingTop: 14, paddingBottom: 48, gap: 16 },
+  handle: {
+    width: 40,
+    height: 4,
+    borderRadius: 4,
+    backgroundColor: colors.border,
+    alignSelf: "center",
+    marginBottom: -8,
   },
-  title: { fontFamily: typography.serif, fontSize: 24, color: colors.inkBlack },
-  cancel: { fontFamily: typography.body, fontSize: 16, color: colors.terracotta },
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "baseline",
+  },
+  title: {
+    fontFamily: typography.serif,
+    fontSize: 32,
+    color: colors.ink,
+  },
+  cancel: {
+    fontFamily: typography.bodyMedium,
+    fontSize: 15,
+    color: colors.primary,
+  },
   subtitle: {
     fontFamily: typography.body,
     fontSize: 14,
-    color: colors.mutedStone,
+    color: colors.inkSoft,
     lineHeight: 21,
   },
   segmented: {
-    flexDirection: 'row',
-    backgroundColor: colors.warmWhite,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: colors.cardBorder,
-    padding: 3,
-  },
-  segment: { flex: 1, paddingVertical: 10, borderRadius: 10, alignItems: 'center' },
-  segmentActive: { backgroundColor: colors.terracotta },
-  segmentText: { fontFamily: typography.bodyMedium, fontSize: 13, color: colors.mutedStone },
-  segmentTextActive: { color: '#fff' },
-  form: { gap: 12 },
-  input: {
-    backgroundColor: colors.warmWhite,
+    flexDirection: "row",
+    backgroundColor: colors.surface,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: colors.cardBorder,
+    borderColor: colors.border,
+    padding: 4,
+  },
+  segment: {
+    flex: 1,
+    paddingVertical: 11,
+    borderRadius: 11,
+    alignItems: "center",
+  },
+  segmentActive: { backgroundColor: colors.primary },
+  segmentText: {
+    fontFamily: typography.bodyMedium,
+    fontSize: 14,
+    color: colors.inkSoft,
+  },
+  segmentTextActive: {
+    fontFamily: typography.bodySemiBold,
+    color: "#fff",
+  },
+  form: { gap: 10 },
+  input: {
+    backgroundColor: colors.surface,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: colors.border,
     paddingHorizontal: 16,
     paddingVertical: 14,
     fontFamily: typography.body,
     fontSize: 15,
-    color: colors.inkBlack,
+    color: colors.ink,
   },
   error: {
     fontFamily: typography.body,
     fontSize: 13,
     color: colors.errorRed,
-    textAlign: 'center',
+    textAlign: "center",
   },
   btn: {
-    backgroundColor: colors.terracotta,
+    backgroundColor: colors.primary,
     borderRadius: 16,
-    paddingVertical: 18,
-    alignItems: 'center',
+    paddingVertical: 17,
+    alignItems: "center",
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.33,
+    shadowRadius: 20,
+    elevation: 4,
   },
   btnDisabled: { opacity: 0.5 },
-  btnText: { fontFamily: typography.bodyMedium, fontSize: 16, color: '#fff' },
-  successCard: {
-    backgroundColor: colors.warmWhite,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: colors.cardBorder,
-    padding: 28,
-    gap: 16,
-    alignItems: 'center',
+  btnText: {
+    fontFamily: typography.bodySemiBold,
+    fontSize: 15,
+    color: "#fff",
   },
-  successEmoji: { fontSize: 48 },
-  successTitle: { fontFamily: typography.serif, fontSize: 22, color: colors.inkBlack },
+  hintCard: {
+    flexDirection: "row",
+    gap: 10,
+    alignItems: "flex-start",
+    padding: 14,
+    backgroundColor: colors.surfaceAlt,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderStyle: "dashed",
+    marginTop: 10,
+  },
+  hintIcon: {
+    width: 22,
+    height: 22,
+    borderRadius: 22,
+    backgroundColor: colors.sage,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  hintIconText: {
+    fontFamily: typography.bodySemiBold,
+    fontSize: 13,
+    color: "#fff",
+  },
+  hintText: {
+    flex: 1,
+    fontFamily: typography.body,
+    fontSize: 12,
+    color: colors.inkSoft,
+    lineHeight: 18,
+  },
+  successCard: {
+    backgroundColor: colors.surface,
+    borderRadius: 22,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: 28,
+    gap: 14,
+    alignItems: "center",
+  },
+  successEmoji: { fontSize: 44 },
+  successTitle: {
+    fontFamily: typography.serif,
+    fontSize: 22,
+    color: colors.ink,
+  },
   successBody: {
     fontFamily: typography.body,
     fontSize: 14,
-    color: colors.mutedStone,
+    color: colors.inkSoft,
     lineHeight: 21,
-    textAlign: 'center',
+    textAlign: "center",
   },
 });

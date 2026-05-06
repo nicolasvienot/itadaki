@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View, ViewStyle } from 'react-native';
 import Animated, { useSharedValue, withTiming, useAnimatedStyle, Easing } from 'react-native-reanimated';
 import { colors, typography } from '../constants/colors';
 
@@ -7,9 +7,21 @@ interface Props {
   tried: number;
   total: number;
   label?: string;
+  height?: number;
+  showLabel?: boolean;
+  trackColor?: string;
+  style?: ViewStyle;
 }
 
-export function ProgressBar({ tried, total, label }: Props) {
+export function ProgressBar({
+  tried,
+  total,
+  label,
+  height = 8,
+  showLabel = true,
+  trackColor,
+  style,
+}: Props) {
   const progress = total > 0 ? tried / total : 0;
   const width = useSharedValue(0);
 
@@ -18,55 +30,52 @@ export function ProgressBar({ tried, total, label }: Props) {
   }, [progress]);
 
   const barStyle = useAnimatedStyle(() => {
-    if (width.value === 0) {
-      return { width: 0 };
-    }
-    return { 
-      flex: width.value,
-      borderTopRightRadius: width.value >= 1 ? 3 : 0,
-      borderBottomRightRadius: width.value >= 1 ? 3 : 0,
-    };
+    return { width: `${width.value * 100}%` };
   });
 
+  const pct = Math.round(progress * 100);
+
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, style]}>
       {label && <Text style={styles.label}>{label}</Text>}
-      <View style={styles.track}>
-        <Animated.View style={[styles.fill, barStyle]} />
-        {progress < 1 && <View style={{ flex: 1 - progress }} />}
+      <View style={[styles.track, { height, borderRadius: height, backgroundColor: trackColor ?? colors.surfaceAlt }]}>
+        <Animated.View style={[styles.fill, { borderRadius: height }, barStyle]} />
       </View>
-      <Text style={styles.count}>{tried}/{total}</Text>
+      {showLabel && (
+        <View style={styles.row}>
+          <Text style={styles.count}>{tried}/{total} dishes</Text>
+          <Text style={styles.count}>{pct}%</Text>
+        </View>
+      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    gap: 6,
-  },
+  container: { gap: 6 },
   label: {
-    fontFamily: typography.bodyMedium,
-    fontSize: 12,
-    color: colors.mutedStone,
+    fontFamily: typography.bodySemiBold,
+    fontSize: 11,
+    color: colors.inkSoft,
     textTransform: 'uppercase',
-    letterSpacing: 1,
+    letterSpacing: 1.4,
   },
   track: {
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: colors.cardBorder,
-    flexDirection: 'row',
     overflow: 'hidden',
+    flexDirection: 'row',
   },
   fill: {
     height: '100%',
-    backgroundColor: colors.sageGreen,
-    borderTopLeftRadius: 3,
-    borderBottomLeftRadius: 3,
+    backgroundColor: colors.sage,
+  },
+  row: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 2,
   },
   count: {
-    fontFamily: typography.body,
+    fontFamily: typography.bodyMedium,
     fontSize: 12,
-    color: colors.mutedStone,
+    color: colors.inkSoft,
   },
 });

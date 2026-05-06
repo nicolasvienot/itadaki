@@ -1,77 +1,43 @@
+import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 import * as Sharing from "expo-sharing";
 import { useRef, useState } from "react";
-import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import {
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useRouter } from "expo-router";
-import { useQueryClient } from "@tanstack/react-query";
 import ViewShot from "react-native-view-shot";
-import { AccountModal } from "../../src/components/AccountModal";
 import { BadgeGrid } from "../../src/components/BadgeGrid";
 import { PassportShareCard } from "../../src/components/PassportShareCard";
 import { ProgressBar } from "../../src/components/ProgressBar";
-import { colors, typography } from "../../src/constants/colors";
+import { colors, numStyle, typography } from "../../src/constants/colors";
 import { useAuthUser } from "../../src/hooks/useAuthUser";
 import { usePassportStats } from "../../src/hooks/usePassportStats";
-import { supabase, ensureAnonymousSession } from "../../src/lib/supabase";
 import { useAppStore } from "../../src/store/useAppStore";
 
 export default function PassportScreen() {
-  const { data: stats, isLoading, isError } = usePassportStats();
-  const { user, isAnonymous } = useAuthUser();
-  const cardRef = useRef<ViewShot>(null);
-  const [modalVisible, setModalVisible] = useState(false);
-  const queryClient = useQueryClient();
   const router = useRouter();
-  const { setActiveDestination, setOnboardingComplete, reset } = useAppStore();
+  const { data: stats, isLoading, isError } = usePassportStats();
+  const { user } = useAuthUser();
+  const cardRef = useRef<ViewShot>(null);
+  const [shareVisible, setShareVisible] = useState(false);
+  const activeDestinationId = useAppStore((s) => s.activeDestinationId);
 
   const handleShare = async () => {
     try {
+      setShareVisible(true);
+      await new Promise((r) => setTimeout(r, 50));
       const uri = await cardRef.current?.capture?.();
       if (uri) await Sharing.shareAsync(uri, { mimeType: "image/png" });
     } catch {
       // share not available on simulator
+    } finally {
+      setShareVisible(false);
     }
-  };
-
-  const handleAuthSuccess = async (mode: 'create' | 'signin') => {
-    setModalVisible(false);
-    if (mode === 'signin') {
-      queryClient.invalidateQueries();
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const { data } = await supabase
-          .from('active_destinations')
-          .select('destination_id')
-          .eq('user_id', user.id)
-          .order('added_at', { ascending: false })
-          .limit(1);
-        if (data && data.length > 0) {
-          setActiveDestination(data[0].destination_id);
-          setOnboardingComplete();
-        }
-      }
-    }
-  };
-
-  const handleSignOut = () => {
-    Alert.alert(
-      'Sign out',
-      'You will be signed out and start a fresh anonymous session. Your cloud progress is safe — just sign in again to restore it.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Sign out',
-          style: 'destructive',
-          onPress: async () => {
-            await supabase.auth.signOut();
-            await ensureAnonymousSession();
-            queryClient.invalidateQueries();
-            await reset();
-            router.replace('/onboarding');
-          },
-        },
-      ]
-    );
   };
 
   if (isError) {
@@ -98,226 +64,290 @@ export default function PassportScreen() {
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.title}>Food passport</Text>
-
-        <View style={styles.statsCard}>
-          <View style={styles.stat}>
-            <Text style={styles.statNum}>{stats.totalDishes}</Text>
-            <Text style={styles.statLabel}>Dishes Tried</Text>
+        {/* Title row + settings gear */}
+        <View style={styles.titleRow}>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.title}>Food passport</Text>
+            <Text style={styles.sub}>Your edible record of the world.</Text>
           </View>
-          <View style={styles.divider} />
-          <View style={styles.stat}>
-            <Text style={styles.statNum}>{stats.countriesVisited}</Text>
-            <Text style={styles.statLabel}>Countries</Text>
-          </View>
-          <View style={styles.divider} />
-          <View style={styles.stat}>
-            <Text style={styles.statNum}>{unlockedBadges}</Text>
-            <Text style={styles.statLabel}>Badges</Text>
-          </View>
+          <TouchableOpacity
+            style={styles.gearBtn}
+            onPress={() => router.push("/settings")}
+            hitSlop={8}
+            activeOpacity={0.85}
+          >
+            <MaterialCommunityIcons name="cog-outline" size={20} color={colors.ink} />
+          </TouchableOpacity>
         </View>
 
-        {stats.destinationProgress.length > 0 && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Destinations</Text>
-            {stats.destinationProgress.map((dest) => (
-              <View key={dest.destinationId} style={styles.destCard}>
-                <Text style={styles.destName}>{dest.name}</Text>
-                <Text style={styles.destCountry}>{dest.country}</Text>
-                <ProgressBar tried={dest.triedCount} total={dest.totalCount} />
+        {/* Stats card */}
+        <View style={styles.statsCardWrap}>
+          <View style={styles.statsCard}>
+            {[
+              { num: stats.totalDishes, label: "DISHES" },
+              { num: stats.countriesVisited, label: "COUNTRIES" },
+              { num: unlockedBadges, label: "BADGES" },
+            ].map((s, i, arr) => (
+              <View key={s.label} style={styles.statsItemRow}>
+                <View style={styles.statsItem}>
+                  <Text style={[numStyle(36, colors.ink), { textAlign: "center" }]}>{s.num}</Text>
+                  <Text style={styles.statsItemLabel}>{s.label}</Text>
+                </View>
+                {i < arr.length - 1 && <View style={styles.statsDivider} />}
               </View>
             ))}
           </View>
-        )}
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Badges</Text>
-          <BadgeGrid badges={stats.badges} />
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Share Your Passport</Text>
-          <View style={styles.sharePreview}>
-            <ViewShot ref={cardRef} options={{ format: "png", quality: 1 }}>
-              <PassportShareCard stats={stats} />
-            </ViewShot>
+        {/* Destinations */}
+        {stats.destinationProgress.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>DESTINATIONS</Text>
+            <View style={styles.destList}>
+              {stats.destinationProgress.map((dest) => (
+                <View key={dest.destinationId} style={styles.destCard}>
+                  {dest.destinationId === activeDestinationId && (
+                    <View style={styles.activeStamp}>
+                      <Text style={styles.activeStampWord}>active</Text>
+                      <Text style={styles.activeStampYear}>2026</Text>
+                    </View>
+                  )}
+                  <Text style={styles.destName}>{dest.name}</Text>
+                  <Text style={styles.destCountry}>{dest.country}</Text>
+                  <View style={{ marginTop: 14 }}>
+                    <ProgressBar
+                      tried={dest.triedCount}
+                      total={dest.totalCount}
+                      height={6}
+                      showLabel={false}
+                    />
+                    <View style={styles.destStatsRow}>
+                      <Text style={styles.destStatsText}>
+                        {dest.triedCount} of {dest.totalCount} dishes
+                      </Text>
+                      <Text style={styles.destStatsText}>
+                        {Math.round((dest.triedCount / Math.max(1, dest.totalCount)) * 100)}%
+                      </Text>
+                    </View>
+                  </View>
+                </View>
+              ))}
+            </View>
           </View>
+        )}
+
+        {/* Badges */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>
+            BADGES · {unlockedBadges} OF {stats.badges.length}
+          </Text>
+          <View style={styles.badgesWrap}>
+            <BadgeGrid badges={stats.badges} />
+          </View>
+        </View>
+
+        {/* Share */}
+        <View style={styles.shareWrap}>
           <TouchableOpacity
             style={styles.shareBtn}
             onPress={handleShare}
             activeOpacity={0.85}
           >
-            <Text style={styles.shareBtnText}>Share Card ↑</Text>
+            <Text style={styles.shareBtnText}>Share my passport</Text>
+            <MaterialCommunityIcons name="arrow-up" size={16} color={colors.bg} />
           </TouchableOpacity>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Account</Text>
-          {isAnonymous ? (
-            <View style={styles.accountCard}>
-              <Text style={styles.accountTitle}>Save your progress</Text>
-              <Text style={styles.accountBody}>
-                Your progress is stored on this device. Create an account to sync it across devices
-                or restore it if you reinstall the app.
-              </Text>
-              <View style={styles.accountBtns}>
-                <TouchableOpacity
-                  style={styles.accountPrimary}
-                  onPress={() => setModalVisible(true)}
-                  activeOpacity={0.85}
-                >
-                  <Text style={styles.accountPrimaryText}>Create account</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.accountSecondary}
-                  onPress={() => setModalVisible(true)}
-                  activeOpacity={0.85}
-                >
-                  <Text style={styles.accountSecondaryText}>Sign in</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          ) : (
-            <View style={styles.accountCard}>
-              <Text style={styles.accountTitle}>Signed in</Text>
-              <Text style={styles.accountBody}>{user?.email}</Text>
-              <TouchableOpacity
-                style={styles.accountSecondary}
-                onPress={handleSignOut}
-                activeOpacity={0.85}
-              >
-                <Text style={styles.accountSecondaryText}>Sign out</Text>
-              </TouchableOpacity>
-            </View>
-          )}
         </View>
       </ScrollView>
 
-      <AccountModal
-        visible={modalVisible}
-        onClose={() => setModalVisible(false)}
-        onSuccess={handleAuthSuccess}
-      />
+      {/* Off-screen render of share card for view-shot */}
+      {shareVisible && (
+        <View style={styles.offscreen} pointerEvents="none">
+          <ViewShot ref={cardRef} options={{ format: "png", quality: 1 }}>
+            <PassportShareCard stats={stats} ownerName={user?.email?.split("@")[0] ?? "You"} />
+          </ViewShot>
+        </View>
+      )}
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: colors.cream },
-  scroll: { flexGrow: 1, padding: 20, gap: 24, paddingBottom: 110 },
+  safe: { flex: 1, backgroundColor: colors.bg },
+  scroll: {
+    flexGrow: 1,
+    paddingBottom: 120,
+  },
   loading: {
     fontFamily: typography.body,
     fontSize: 16,
-    color: colors.mutedStone,
+    color: colors.inkMuted,
     padding: 40,
     textAlign: "center",
   },
+  titleRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    paddingHorizontal: 24,
+    paddingTop: 12,
+    paddingBottom: 14,
+    gap: 12,
+  },
   title: {
     fontFamily: typography.serif,
-    fontSize: 28,
-    color: colors.inkBlack,
+    fontSize: 38,
+    color: colors.ink,
+    letterSpacing: -0.5,
+  },
+  sub: {
+    fontFamily: typography.body,
+    fontSize: 15,
+    color: colors.inkSoft,
+    marginTop: 4,
+    lineHeight: 21,
+  },
+  gearBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 38,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 6,
+  },
+  statsCardWrap: {
+    paddingHorizontal: 16,
+    paddingBottom: 22,
   },
   statsCard: {
-    backgroundColor: colors.warmWhite,
-    borderRadius: 20,
+    backgroundColor: colors.surface,
+    borderRadius: 22,
     borderWidth: 1,
-    borderColor: colors.cardBorder,
+    borderColor: colors.border,
+    paddingVertical: 20,
+    paddingHorizontal: 18,
     flexDirection: "row",
-    padding: 20,
   },
-  stat: { flex: 1, alignItems: "center", gap: 4 },
-  statNum: {
-    fontFamily: typography.bodyMedium,
-    fontSize: 28,
-    color: colors.inkBlack,
+  statsItemRow: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "stretch",
   },
-  statLabel: {
-    fontFamily: typography.body,
-    fontSize: 11,
-    color: colors.mutedStone,
-    textTransform: "uppercase",
-    letterSpacing: 1,
+  statsItem: {
+    flex: 1,
+    alignItems: "center",
   },
-  divider: { width: 1, backgroundColor: colors.cardBorder, marginVertical: 4 },
-  section: { gap: 14 },
+  statsDivider: {
+    width: 1,
+    backgroundColor: colors.border,
+    marginVertical: 6,
+  },
+  statsItemLabel: {
+    fontFamily: typography.bodySemiBold,
+    fontSize: 10,
+    color: colors.inkSoft,
+    letterSpacing: 1.4,
+    marginTop: 6,
+  },
+  section: {
+    paddingBottom: 22,
+  },
   sectionTitle: {
-    fontFamily: typography.bodyMedium,
-    fontSize: 13,
-    color: colors.mutedStone,
-    textTransform: "uppercase",
-    letterSpacing: 1,
+    fontFamily: typography.bodySemiBold,
+    fontSize: 11,
+    color: colors.inkSoft,
+    letterSpacing: 1.4,
+    paddingHorizontal: 24,
+    paddingBottom: 10,
+  },
+  destList: {
+    paddingHorizontal: 16,
+    gap: 10,
   },
   destCard: {
-    backgroundColor: colors.warmWhite,
-    borderRadius: 16,
+    backgroundColor: colors.surface,
+    borderRadius: 18,
     borderWidth: 1,
-    borderColor: colors.cardBorder,
+    borderColor: colors.border,
     padding: 16,
-    gap: 4,
+    overflow: "hidden",
+    position: "relative",
+  },
+  activeStamp: {
+    position: "absolute",
+    top: 10,
+    right: 10,
+    width: 56,
+    height: 56,
+    borderRadius: 56,
+    borderWidth: 1.5,
+    borderColor: colors.primary,
+    alignItems: "center",
+    justifyContent: "center",
+    transform: [{ rotate: "-12deg" }],
+    opacity: 0.85,
+  },
+  activeStampWord: {
+    fontFamily: typography.serifItalic,
+    fontSize: 11,
+    color: colors.primary,
+    lineHeight: 11,
+  },
+  activeStampYear: {
+    fontFamily: typography.bodyBold,
+    fontSize: 8,
+    color: colors.primary,
+    letterSpacing: 1,
+    marginTop: 2,
   },
   destName: {
     fontFamily: typography.serif,
-    fontSize: 18,
-    color: colors.inkBlack,
+    fontSize: 22,
+    color: colors.ink,
+    lineHeight: 24,
   },
   destCountry: {
     fontFamily: typography.body,
+    fontSize: 13,
+    color: colors.inkSoft,
+    marginTop: 3,
+  },
+  destStatsRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 8,
+  },
+  destStatsText: {
+    fontFamily: typography.bodyMedium,
     fontSize: 12,
-    color: colors.mutedStone,
-    marginBottom: 8,
+    color: colors.inkSoft,
   },
-  sharePreview: { alignItems: "center" },
+  badgesWrap: {
+    paddingHorizontal: 16,
+  },
+  shareWrap: {
+    paddingHorizontal: 16,
+    paddingBottom: 18,
+  },
   shareBtn: {
-    backgroundColor: colors.terracotta,
-    borderRadius: 14,
+    backgroundColor: colors.ink,
+    borderRadius: 18,
     paddingVertical: 16,
+    flexDirection: "row",
     alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
   },
-  shareBtnText: { fontFamily: typography.bodyMedium, fontSize: 15, color: "#fff" },
-  accountCard: {
-    backgroundColor: colors.warmWhite,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: colors.cardBorder,
-    padding: 20,
-    gap: 12,
+  shareBtnText: {
+    fontFamily: typography.bodySemiBold,
+    fontSize: 15,
+    color: colors.bg,
   },
-  accountTitle: {
-    fontFamily: typography.serif,
-    fontSize: 18,
-    color: colors.inkBlack,
-  },
-  accountBody: {
-    fontFamily: typography.body,
-    fontSize: 14,
-    color: colors.mutedStone,
-    lineHeight: 21,
-  },
-  accountBtns: { flexDirection: "row", gap: 10 },
-  accountPrimary: {
-    flex: 1,
-    backgroundColor: colors.terracotta,
-    borderRadius: 12,
-    paddingVertical: 13,
-    alignItems: "center",
-  },
-  accountPrimaryText: {
-    fontFamily: typography.bodyMedium,
-    fontSize: 14,
-    color: "#fff",
-  },
-  accountSecondary: {
-    flex: 1,
-    backgroundColor: colors.warmWhite,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: colors.cardBorder,
-    paddingVertical: 13,
-    alignItems: "center",
-  },
-  accountSecondaryText: {
-    fontFamily: typography.bodyMedium,
-    fontSize: 14,
-    color: colors.inkBlack,
+  offscreen: {
+    position: "absolute",
+    left: -9999,
+    top: -9999,
+    opacity: 0,
   },
 });

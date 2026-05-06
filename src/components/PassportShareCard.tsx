@@ -1,67 +1,77 @@
-import { Image } from "expo-image";
 import { forwardRef } from "react";
 import { StyleSheet, Text, View } from "react-native";
-import { colors, typography } from "../constants/colors";
+import { colors, numStyle, typography } from "../constants/colors";
 import { PassportStats } from "../types";
 
 interface Props {
   stats: PassportStats;
+  ownerName?: string;
 }
 
-export const PassportShareCard = forwardRef<View, Props>(({ stats }, ref) => {
+export const PassportShareCard = forwardRef<View, Props>(({ stats, ownerName = 'You' }, ref) => {
   const unlockedBadges = stats.badges.filter((b) => b.unlocked);
-  const allPhotos = stats.destinationProgress
-    .flatMap((d) => d.recentPhotos)
-    .slice(0, 4);
+  const cities = stats.destinationProgress.slice(0, 4);
+  while (cities.length < 4) cities.push(undefined as any);
 
   return (
-    <View ref={ref} style={styles.card} collapsable={false}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Itadaki</Text>
-        <Text style={styles.subtitle}>Food passport</Text>
-      </View>
+    <View ref={ref} collapsable={false} style={styles.wrap}>
+      <View style={styles.card}>
+        {/* Stamp */}
+        <View style={styles.stamp}>
+          <Text style={styles.stampWord}>foodie</Text>
+          <Text style={styles.stampYear}>2026</Text>
+        </View>
 
-      <View style={styles.statsRow}>
-        <View style={styles.stat}>
-          <Text style={styles.statNum}>{stats.totalDishes}</Text>
-          <Text style={styles.statLabel}>Dishes</Text>
-        </View>
-        <View style={styles.divider} />
-        <View style={styles.stat}>
-          <Text style={styles.statNum}>{stats.countriesVisited}</Text>
-          <Text style={styles.statLabel}>Countries</Text>
-        </View>
-        <View style={styles.divider} />
-        <View style={styles.stat}>
-          <Text style={styles.statNum}>{unlockedBadges.length}</Text>
-          <Text style={styles.statLabel}>Badges</Text>
-        </View>
-      </View>
+        <Text style={styles.eyebrow}>FOOD PASSPORT</Text>
+        <Text style={styles.brand}>Itadaki</Text>
 
-      {allPhotos.length > 0 && (
-        <View style={styles.photoGrid}>
-          {allPhotos.map((uri, i) => (
-            <Image
+        <Text style={styles.issuedLabel}>Issued to</Text>
+        <Text style={styles.issuedName}>{ownerName}</Text>
+
+        <View style={styles.statsRow}>
+          {[
+            { num: stats.totalDishes, label: 'Dishes' },
+            { num: stats.countriesVisited, label: 'Cities' },
+            { num: unlockedBadges.length, label: 'Stamps' },
+          ].map((s, i, arr) => (
+            <View key={s.label} style={styles.statWrap}>
+              <View style={styles.stat}>
+                <Text style={numStyle(30)}>{s.num}</Text>
+                <Text style={styles.statLabel}>{s.label}</Text>
+              </View>
+              {i < arr.length - 1 && <View style={styles.statDivider} />}
+            </View>
+          ))}
+        </View>
+
+        <View style={styles.miniGrid}>
+          {cities.map((c, i) => (
+            <View
               key={i}
-              source={{ uri }}
-              style={styles.photo}
-              contentFit="cover"
-            />
+              style={[
+                styles.miniStamp,
+                c
+                  ? { borderColor: colors.primary, borderStyle: 'solid' }
+                  : { borderColor: colors.border, borderStyle: 'dashed' },
+              ]}
+            >
+              <Text
+                style={[
+                  styles.miniStampText,
+                  { color: c ? colors.primary : colors.inkMuted },
+                ]}
+              >
+                {c ? c.name : '?'}
+              </Text>
+            </View>
           ))}
         </View>
-      )}
 
-      {unlockedBadges.length > 0 && (
-        <View style={styles.badgeRow}>
-          {unlockedBadges.map((b) => (
-            <Text key={b.id} style={styles.badgeEmoji}>
-              {b.emoji}
-            </Text>
-          ))}
+        <View style={styles.footer}>
+          <Text style={styles.footerText}>itadaki.app</Text>
+          <Text style={styles.footerText}>NV-0042 · MAY 2026</Text>
         </View>
-      )}
-
-      <Text style={styles.footer}>itadaki.app</Text>
+      </View>
     </View>
   );
 });
@@ -69,85 +79,121 @@ export const PassportShareCard = forwardRef<View, Props>(({ stats }, ref) => {
 PassportShareCard.displayName = "PassportShareCard";
 
 const styles = StyleSheet.create({
+  wrap: {
+    backgroundColor: colors.ink,
+    padding: 24,
+  },
   card: {
-    backgroundColor: colors.cream,
+    backgroundColor: colors.bg,
     borderRadius: 24,
     padding: 24,
-    width: 320,
-    gap: 20,
+    paddingTop: 28,
   },
-  header: {
-    alignItems: "center",
-    gap: 2,
+  stamp: {
+    position: 'absolute',
+    top: 22,
+    right: 24,
+    width: 64,
+    height: 64,
+    borderRadius: 64,
+    borderWidth: 1.5,
+    borderColor: colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    transform: [{ rotate: '-10deg' }],
+    opacity: 0.85,
   },
-  title: {
-    fontFamily: typography.serif,
-    fontSize: 28,
-    color: colors.terracotta,
+  stampWord: {
+    fontFamily: typography.serifItalic,
+    fontSize: 14,
+    color: colors.primary,
+    lineHeight: 14,
   },
-  subtitle: {
+  stampYear: {
+    fontFamily: typography.bodyBold,
+    fontSize: 8,
+    color: colors.primary,
+    letterSpacing: 1,
+    marginTop: 2,
+  },
+  eyebrow: {
+    fontFamily: typography.bodyBold,
+    fontSize: 10,
+    color: colors.inkSoft,
+    letterSpacing: 1.6,
+  },
+  brand: {
+    fontFamily: typography.serifItalic,
+    fontSize: 36,
+    color: colors.primary,
+    marginTop: 8,
+    lineHeight: 36,
+  },
+  issuedLabel: {
     fontFamily: typography.body,
-    fontSize: 12,
-    color: colors.mutedStone,
-    textTransform: "uppercase",
-    letterSpacing: 2,
+    fontSize: 14,
+    color: colors.inkSoft,
+    marginTop: 24,
+  },
+  issuedName: {
+    fontFamily: typography.serif,
+    fontSize: 24,
+    color: colors.ink,
+    marginTop: 2,
   },
   statsRow: {
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: colors.warmWhite,
-    borderRadius: 16,
-    padding: 16,
-    gap: 0,
+    flexDirection: 'row',
+    marginTop: 20,
+  },
+  statWrap: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'stretch',
   },
   stat: {
     flex: 1,
-    alignItems: "center",
-    gap: 2,
   },
-  statNum: {
-    fontFamily: typography.serif,
-    fontSize: 32,
-    color: colors.inkBlack,
+  statDivider: {
+    width: 1,
+    backgroundColor: colors.border,
+    marginVertical: 4,
   },
   statLabel: {
-    fontFamily: typography.body,
-    fontSize: 11,
-    color: colors.mutedStone,
-    textTransform: "uppercase",
-    letterSpacing: 1,
+    fontFamily: typography.bodySemiBold,
+    fontSize: 10,
+    color: colors.inkSoft,
+    letterSpacing: 1.4,
+    marginTop: 6,
   },
-  divider: {
-    width: 1,
-    height: 40,
-    backgroundColor: colors.cardBorder,
-  },
-  photoGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 6,
-    borderRadius: 12,
-    overflow: "hidden",
-  },
-  photo: {
-    width: 128,
-    height: 80,
-    borderRadius: 8,
-  },
-  badgeRow: {
-    flexDirection: "row",
+  miniGrid: {
+    flexDirection: 'row',
     gap: 8,
-    justifyContent: "center",
+    marginTop: 22,
   },
-  badgeEmoji: {
-    fontSize: 24,
+  miniStamp: {
+    flex: 1,
+    aspectRatio: 1,
+    borderRadius: 10,
+    borderWidth: 1.2,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  miniStampText: {
+    fontFamily: typography.serifItalic,
+    fontSize: 11,
   },
   footer: {
+    marginTop: 22,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderColor: colors.border,
+    borderStyle: 'dashed',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  footerText: {
     fontFamily: typography.body,
-    fontSize: 10,
-    color: colors.mutedStone,
-    textAlign: "center",
-    letterSpacing: 1,
+    fontSize: 11,
+    color: colors.inkMuted,
   },
 });

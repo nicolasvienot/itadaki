@@ -1,37 +1,35 @@
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import { colors } from '../constants/colors';
 
 interface Props {
   value: number;
-  onChange: (rating: number) => void;
+  onChange?: (rating: number) => void;
   size?: number;
+  readOnly?: boolean;
 }
 
-export function StarRating({ value, onChange, size = 36 }: Props) {
+export function StarRating({ value, onChange, size = 28, readOnly }: Props) {
   return (
     <View style={styles.row}>
-      {[1, 2, 3, 4, 5].map((star) => (
-        <TouchableOpacity
-          key={star}
-          onPress={() => onChange(star)}
-          hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
-        >
-          <View style={[styles.star, { width: size, height: size }]}>
-            <View
-              style={[
-                styles.starInner,
-                {
-                  backgroundColor: star <= value ? colors.dustyGold : 'transparent',
-                  borderColor: star <= value ? colors.dustyGold : colors.mutedStone,
-                  width: size - 4,
-                  height: size - 4,
-                  borderRadius: (size - 4) / 2,
-                },
-              ]}
+      {[1, 2, 3, 4, 5].map((star) => {
+        const filled = star <= value;
+        const Wrapper: any = readOnly || !onChange ? View : TouchableOpacity;
+        return (
+          <Wrapper
+            key={star}
+            onPress={onChange ? () => onChange(star) : undefined}
+            hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
+            activeOpacity={0.8}
+          >
+            <MaterialCommunityIcons
+              name={filled ? 'star' : 'star-outline'}
+              size={size}
+              color={filled ? colors.gold : colors.inkMuted}
             />
-          </View>
-        </TouchableOpacity>
-      ))}
+          </Wrapper>
+        );
+      })}
     </View>
   );
 }
@@ -39,15 +37,7 @@ export function StarRating({ value, onChange, size = 36 }: Props) {
 const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
-    gap: 8,
+    gap: 4,
     alignItems: 'center',
-    justifyContent: 'center',
-  },
-  star: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  starInner: {
-    borderWidth: 2,
   },
 });

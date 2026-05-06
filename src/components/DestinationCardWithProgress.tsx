@@ -1,6 +1,6 @@
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Image } from 'expo-image';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { colors, typography } from '../constants/colors';
 import { Destination } from '../types';
 
@@ -10,6 +10,8 @@ interface Props {
   totalCount: number;
   onPress: () => void;
   isCurrent?: boolean;
+  /** Compact 2-col tile for the "New missions" grid */
+  tile?: boolean;
 }
 
 export function DestinationCardWithProgress({
@@ -18,45 +20,53 @@ export function DestinationCardWithProgress({
   totalCount,
   onPress,
   isCurrent = false,
+  tile = false,
 }: Props) {
   const progress = totalCount > 0 ? (triedCount / totalCount) * 100 : 0;
+  const pct = Math.round(progress);
+
+  if (tile) {
+    return (
+      <TouchableOpacity style={styles.tile} onPress={onPress} activeOpacity={0.85}>
+        <Image source={{ uri: destination.coverPhotoUrl }} style={StyleSheet.absoluteFill} contentFit="cover" />
+        <LinearGradient
+          colors={['rgba(0,0,0,0)', 'rgba(0,0,0,0.7)']}
+          locations={[0.3, 1]}
+          style={StyleSheet.absoluteFill}
+        />
+        <View style={styles.tileBottom}>
+          <Text style={styles.tileName}>{destination.name}</Text>
+          <View style={styles.tileMeta}>
+            <Text style={styles.tileMetaText}>{destination.country}</Text>
+            <Text style={styles.tileMetaText}>{totalCount} dishes</Text>
+          </View>
+        </View>
+      </TouchableOpacity>
+    );
+  }
 
   return (
-    <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.8}>
-      <Image source={{ uri: destination.coverPhotoUrl }} style={styles.image} contentFit="cover" />
-      
-      <View style={styles.overlay} />
-      
-      <View style={styles.content}>
-        <View style={styles.header}>
-          <View style={styles.info}>
-            <Text style={styles.name}>{destination.name}</Text>
-            <Text style={styles.country}>{destination.country}</Text>
-          </View>
-          
-          {isCurrent && (
-            <View style={styles.currentBadge}>
-              <MaterialCommunityIcons name="check-circle" size={16} color={colors.terracotta} />
-              <Text style={styles.currentText}>Current</Text>
-            </View>
-          )}
+    <TouchableOpacity style={styles.row} onPress={onPress} activeOpacity={0.85}>
+      <Image source={{ uri: destination.coverPhotoUrl }} style={StyleSheet.absoluteFill} contentFit="cover" />
+      <LinearGradient
+        colors={['rgba(0,0,0,0.7)', 'rgba(0,0,0,0.2)']}
+        start={{ x: 0, y: 0.5 }}
+        end={{ x: 1, y: 0.5 }}
+        style={StyleSheet.absoluteFill}
+      />
+      <View style={styles.rowContent}>
+        <View>
+          <Text style={styles.rowCountry}>{destination.country.toUpperCase()}</Text>
+          <Text style={styles.rowName}>{destination.name}</Text>
         </View>
-        
-        <View style={styles.progressSection}>
-          <View style={styles.progressInfo}>
-            <Text style={styles.progressText}>
-              {triedCount}/{totalCount} dishes
-            </Text>
-            <Text style={styles.percentage}>
-              {totalCount > 0 ? Math.round(progress) : 0}%
-            </Text>
+        <View>
+          <Text style={styles.rowProgress}>
+            {triedCount}/{totalCount} · {pct}%
+          </Text>
+          <View style={styles.rowTrack}>
+            <View style={[styles.rowFill, { width: `${progress}%` }]} />
           </View>
-          
-          <View style={styles.progressTrack}>
-            {triedCount > 0 && (
-              <View style={[styles.progressFill, { width: `${progress}%` }]} />
-            )}
-          </View>
+          {isCurrent && <Text style={styles.currentTag}>CURRENT CITY</Text>}
         </View>
       </View>
     </TouchableOpacity>
@@ -64,105 +74,85 @@ export function DestinationCardWithProgress({
 }
 
 const styles = StyleSheet.create({
-  card: {
-    borderRadius: 20,
+  // Horizontal row card
+  row: {
+    height: 160,
+    borderRadius: 22,
     overflow: 'hidden',
-    height: 200,
-    backgroundColor: colors.inkBlack,
-    shadowColor: colors.inkBlack,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 4,
+    backgroundColor: colors.surfaceAlt,
   },
-  image: {
-    ...StyleSheet.absoluteFillObject,
-  },
-  overlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.3)',
-  },
-  content: {
+  rowContent: {
     flex: 1,
-    padding: 16,
+    padding: 20,
     justifyContent: 'space-between',
   },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
+  rowCountry: {
+    fontFamily: typography.bodyBold,
+    fontSize: 9,
+    color: '#fff',
+    opacity: 0.85,
+    letterSpacing: 1.4,
   },
-  info: {
-    flex: 1,
-    gap: 2,
-  },
-  name: {
+  rowName: {
     fontFamily: typography.serif,
-    fontSize: 24,
-    color: colors.warmWhite,
-    textShadowColor: 'rgba(0,0,0,0.5)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
+    fontSize: 26,
+    color: '#fff',
+    lineHeight: 28,
+    marginTop: 2,
   },
-  country: {
-    fontFamily: typography.body,
+  rowProgress: {
+    fontFamily: typography.bodyMedium,
     fontSize: 12,
-    color: 'rgba(255,255,255,0.9)',
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-    textShadowColor: 'rgba(0,0,0,0.5)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
+    color: '#fff',
+    marginBottom: 6,
   },
-  currentBadge: {
-    backgroundColor: colors.warmWhite,
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-    gap: 4,
+  rowTrack: {
+    height: 5,
+    backgroundColor: 'rgba(255,255,255,0.25)',
+    borderRadius: 5,
+    overflow: 'hidden',
+    maxWidth: 160,
   },
-  currentText: {
-    fontFamily: typography.bodyMedium,
-    fontSize: 10,
-    color: colors.terracotta,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
+  rowFill: {
+    height: '100%',
+    backgroundColor: '#fff',
   },
-  progressSection: {
-    gap: 8,
+  currentTag: {
+    fontFamily: typography.bodyBold,
+    fontSize: 9,
+    color: '#fff',
+    letterSpacing: 1.2,
+    marginTop: 4,
   },
-  progressInfo: {
+
+  // Square tile for grids
+  tile: {
+    aspectRatio: 1 / 1.05,
+    borderRadius: 18,
+    overflow: 'hidden',
+    backgroundColor: colors.surfaceAlt,
+  },
+  tileBottom: {
+    position: 'absolute',
+    left: 12,
+    right: 12,
+    bottom: 12,
+  },
+  tileName: {
+    fontFamily: typography.serif,
+    fontSize: 19,
+    color: '#fff',
+    lineHeight: 21,
+  },
+  tileMeta: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
+    marginTop: 3,
   },
-  progressText: {
-    fontFamily: typography.bodyMedium,
-    fontSize: 13,
-    color: colors.warmWhite,
-    textShadowColor: 'rgba(0,0,0,0.5)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
-  },
-  percentage: {
-    fontFamily: typography.serif,
-    fontSize: 16,
-    color: colors.warmWhite,
-    textShadowColor: 'rgba(0,0,0,0.5)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
-  },
-  progressTrack: {
-    height: 6,
-    backgroundColor: 'rgba(255,255,255,0.3)',
-    borderRadius: 3,
-    overflow: 'hidden',
-  },
-  progressFill: {
-    height: '100%',
-    backgroundColor: colors.warmWhite,
-    borderRadius: 3,
+  tileMetaText: {
+    fontFamily: typography.body,
+    fontSize: 11,
+    color: '#fff',
+    opacity: 0.85,
   },
 });

@@ -1,11 +1,18 @@
 import { Image } from "expo-image";
+import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import {
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { ScreenHeader } from "../../../src/components/ScreenHeader";
+import { Skeleton } from "../../../src/components/Skeleton";
+import { StarRating } from "../../../src/components/StarRating";
 import { colors, typography } from "../../../src/constants/colors";
 import { useDestinationDetail } from "../../../src/hooks/useDestinationDetail";
-import { Loader } from "../../../src/components/Loader";
-import { ScreenHeader } from "../../../src/components/ScreenHeader";
 
 export default function DishDetailScreen() {
   const { destinationId, dishId } = useLocalSearchParams<{
@@ -18,207 +25,282 @@ export default function DishDetailScreen() {
   const check = checks[dishId];
 
   if (isLoading) {
-    return <Loader />;
+    return <DishDetailSkeleton onBack={() => router.back()} />;
   }
 
-  if (!dish) {
+  if (!dish || !destination) {
     return (
-      <SafeAreaView style={styles.safe}>
+      <View style={styles.safe}>
         <Text style={styles.notFound}>Dish not found.</Text>
-      </SafeAreaView>
+      </View>
     );
   }
 
+  const dishIndex = destination.dishes.findIndex((d) => d.id === dish.id) + 1;
+  const totalDishes = destination.dishes.length;
+
   return (
     <View style={styles.safe}>
-      <Image
-        source={{ uri: dish.photoUrl }}
-        style={[styles.hero, { backgroundColor: colors.terracotta }]}
-        contentFit="cover"
-        transition={400}
-      />
-      <View style={styles.heroOverlay} />
+      {/* Hero photo */}
+      <View style={styles.hero}>
+        <Image
+          source={{ uri: dish.photoUrl }}
+          style={StyleSheet.absoluteFill}
+          contentFit="cover"
+          transition={400}
+        />
+        <ScreenHeader onBack={() => router.back()} overlay />
+      </View>
 
-      <ScreenHeader onBack={() => router.back()} overlay />
+      {/* Sheet */}
+      <View style={styles.sheet}>
+        <LinearGradient
+          colors={["rgba(0,0,0,0)", colors.bg]}
+          locations={[0, 0.6]}
+          style={styles.sheetTopFade}
+          pointerEvents="none"
+        />
+        <ScrollView
+          contentContainerStyle={styles.sheetContent}
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.handle} />
 
-      <ScrollView
-        style={styles.sheet}
-        contentContainerStyle={styles.sheetContent}
-        showsVerticalScrollIndicator={false}
-      >
-        <View style={styles.handle} />
-
-        <Text style={styles.localName}>{dish.localName}</Text>
-        <Text style={styles.name}>{dish.name}</Text>
-        <Text style={styles.oneLiner}>{dish.oneLiner}</Text>
-
-        {dish.funFact && (
-          <View style={styles.funFactCard}>
-            <Text style={styles.funFactLabel}>Did you know?</Text>
-            <Text style={styles.funFact}>{dish.funFact}</Text>
-          </View>
-        )}
-
-        {check ? (
-          <View style={styles.checkedState}>
-            <Text style={styles.checkedLabel}>✓ You tried this!</Text>
-            {check.rating != null && (
-              <View style={styles.ratingRow}>
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <View
-                    key={i}
-                    style={[
-                      styles.starDot,
-                      {
-                        backgroundColor:
-                          i < check.rating!
-                            ? colors.dustyGold
-                            : colors.cardBorder,
-                      },
-                    ]}
-                  />
-                ))}
+          <View style={styles.eyebrowRow}>
+            <Text style={styles.eyebrow}>
+              {destination.name.toUpperCase()} · DISH {dishIndex} OF {totalDishes}
+            </Text>
+            {check && (
+              <View style={styles.localFave}>
+                <Text style={styles.localFaveText}>★ Tried</Text>
               </View>
             )}
-            {check.note && <Text style={styles.note}>"{check.note}"</Text>}
-            <TouchableOpacity
-              style={styles.retryBtn}
-              onPress={() =>
-                router.push(`/capture/${dishId}?destinationId=${destinationId}`)
-              }
-            >
-              <Text style={styles.retryBtnText}>Edit</Text>
-            </TouchableOpacity>
           </View>
-        ) : (
+
+          <Text style={styles.localName}>
+            {dish.localName} <Text style={styles.localNameEn}>· {dish.name}</Text>
+          </Text>
+          <Text style={styles.name}>{dish.name}</Text>
+          <Text style={styles.oneLiner}>{dish.oneLiner}</Text>
+
+          {dish.funFact ? (
+            <View style={styles.factCard}>
+              <Text style={styles.factLabel}>DID YOU KNOW</Text>
+              <Text style={styles.factBody}>{dish.funFact}</Text>
+            </View>
+          ) : null}
+
+          {check && (
+            <View style={styles.checkCard}>
+              <Text style={styles.checkTitle}>You tried this</Text>
+              {check.rating != null && (
+                <View style={{ marginTop: 8 }}>
+                  <StarRating value={check.rating} readOnly size={20} />
+                </View>
+              )}
+              {check.note ? <Text style={styles.checkNote}>"{check.note}"</Text> : null}
+            </View>
+          )}
+        </ScrollView>
+
+        {/* Sticky CTA */}
+        <View style={styles.ctaWrap} pointerEvents="box-none">
+          <LinearGradient
+            colors={["rgba(245,239,224,0)", colors.bg]}
+            locations={[0, 0.4]}
+            style={StyleSheet.absoluteFill}
+            pointerEvents="none"
+          />
           <TouchableOpacity
-            style={styles.ctaBtn}
+            style={styles.cta}
+            activeOpacity={0.9}
             onPress={() =>
               router.push(`/capture/${dishId}?destinationId=${destinationId}`)
             }
-            activeOpacity={0.85}
           >
-            <Text style={styles.ctaBtnText}>Mark as tried</Text>
+            <Text style={styles.ctaText}>{check ? "Edit check-off" : "Mark as tried"}</Text>
           </TouchableOpacity>
-        )}
-      </ScrollView>
+        </View>
+      </View>
+    </View>
+  );
+}
+
+function DishDetailSkeleton({ onBack }: { onBack: () => void }) {
+  return (
+    <View style={styles.safe}>
+      <View style={styles.hero}>
+        <Skeleton width="100%" height={380} radius={0} style={StyleSheet.absoluteFillObject} />
+        <ScreenHeader onBack={onBack} overlay />
+      </View>
+      <View style={styles.sheet}>
+        <View style={{ paddingHorizontal: 24, paddingTop: 14, gap: 14 }}>
+          <View style={[styles.handle, { backgroundColor: colors.border, alignSelf: "center" }]} />
+          <Skeleton width={160} height={11} radius={4} />
+          <Skeleton width={180} height={14} radius={4} />
+          <Skeleton width="80%" height={34} radius={8} />
+          <Skeleton width="100%" height={14} radius={4} />
+          <Skeleton width="92%" height={14} radius={4} />
+          <Skeleton width="65%" height={14} radius={4} />
+        </View>
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: colors.inkBlack },
-  hero: { position: "absolute", top: 0, left: 0, right: 0, height: "55%" },
-  heroOverlay: {
+  safe: { flex: 1, backgroundColor: colors.bg },
+  hero: {
     position: "absolute",
     top: 0,
     left: 0,
     right: 0,
-    height: "55%",
-    backgroundColor: "rgba(26,20,16,0.25)",
+    height: 380,
+    backgroundColor: colors.surfaceAlt,
   },
   sheet: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    top: "45%",
-    backgroundColor: colors.cream,
+    flex: 1,
+    marginTop: 348,
+    backgroundColor: colors.bg,
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
+    overflow: "hidden",
   },
-  sheetContent: { padding: 24, gap: 16, paddingBottom: 48 },
+  sheetTopFade: {
+    position: "absolute",
+    top: -16,
+    left: 0,
+    right: 0,
+    height: 28,
+  },
+  sheetContent: {
+    paddingHorizontal: 24,
+    paddingTop: 14,
+    paddingBottom: 140,
+  },
   handle: {
-    width: 36,
+    width: 40,
     height: 4,
-    borderRadius: 2,
-    backgroundColor: colors.cardBorder,
+    borderRadius: 4,
+    backgroundColor: colors.border,
     alignSelf: "center",
-    marginBottom: 8,
+    marginBottom: 20,
+  },
+  eyebrowRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 10,
+  },
+  eyebrow: {
+    fontFamily: typography.bodySemiBold,
+    fontSize: 11,
+    color: colors.inkMuted,
+    letterSpacing: 1.2,
+  },
+  localFave: {
+    backgroundColor: colors.surfaceAlt,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  localFaveText: {
+    fontFamily: typography.bodySemiBold,
+    fontSize: 10,
+    color: colors.inkSoft,
   },
   localName: {
-    fontFamily: typography.body,
-    fontSize: 13,
-    color: colors.terracotta,
-    letterSpacing: 0.5,
+    fontFamily: typography.bodyMedium,
+    fontSize: 14,
+    color: colors.primary,
   },
-  name: { fontFamily: typography.serif, fontSize: 26, color: colors.inkBlack },
+  localNameEn: {
+    color: colors.inkMuted,
+  },
+  name: {
+    fontFamily: typography.serif,
+    fontSize: 34,
+    color: colors.ink,
+    letterSpacing: -0.4,
+    lineHeight: 36,
+    marginTop: 4,
+  },
   oneLiner: {
     fontFamily: typography.body,
     fontSize: 15,
-    color: colors.mutedStone,
-    lineHeight: 23,
+    color: colors.inkSoft,
+    lineHeight: 22,
+    marginTop: 10,
   },
-  funFactCard: {
-    backgroundColor: colors.warmWhite,
-    borderRadius: 14,
-    padding: 16,
+  factCard: {
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: colors.cardBorder,
+    borderColor: colors.border,
+    borderRadius: 14,
+    padding: 14,
+    marginTop: 18,
     gap: 6,
   },
-  funFactLabel: {
-    fontFamily: typography.bodyMedium,
-    fontSize: 11,
-    color: colors.terracotta,
-    textTransform: "uppercase",
-    letterSpacing: 1,
+  factLabel: {
+    fontFamily: typography.bodySemiBold,
+    fontSize: 10,
+    color: colors.primary,
+    letterSpacing: 1.4,
   },
-  funFact: {
+  factBody: {
     fontFamily: typography.body,
     fontSize: 13,
-    color: colors.inkBlack,
+    color: colors.ink,
     lineHeight: 20,
   },
-  checkedState: {
-    backgroundColor: colors.warmWhite,
-    borderRadius: 16,
+  checkCard: {
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: colors.sageGreen,
-    padding: 18,
-    gap: 10,
-    alignItems: "flex-start",
+    borderColor: colors.success,
+    borderRadius: 16,
+    padding: 16,
+    marginTop: 18,
   },
-  checkedLabel: {
-    fontFamily: typography.bodyMedium,
-    fontSize: 14,
-    color: colors.sageGreen,
+  checkTitle: {
+    fontFamily: typography.bodySemiBold,
+    fontSize: 13,
+    color: colors.success,
   },
-  ratingRow: { flexDirection: "row", gap: 6 },
-  starDot: { width: 10, height: 10, borderRadius: 5 },
-  note: {
+  checkNote: {
     fontFamily: typography.body,
-    fontSize: 13,
-    color: colors.mutedStone,
+    fontSize: 14,
+    color: colors.inkSoft,
     fontStyle: "italic",
+    marginTop: 10,
   },
-  retryBtn: {
-    alignSelf: "flex-start",
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: colors.cardBorder,
+  ctaWrap: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    bottom: 0,
+    paddingHorizontal: 16,
+    paddingTop: 24,
+    paddingBottom: 30,
   },
-  retryBtnText: {
-    fontFamily: typography.bodyMedium,
-    fontSize: 13,
-    color: colors.mutedStone,
-  },
-  ctaBtn: {
-    backgroundColor: colors.terracotta,
-    borderRadius: 16,
-    paddingVertical: 18,
+  cta: {
+    backgroundColor: colors.primary,
+    borderRadius: 18,
+    paddingVertical: 17,
     alignItems: "center",
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.33,
+    shadowRadius: 20,
+    elevation: 6,
   },
-  ctaBtnText: {
-    fontFamily: typography.bodyMedium,
-    fontSize: 16,
+  ctaText: {
+    fontFamily: typography.bodySemiBold,
+    fontSize: 15,
     color: "#fff",
   },
   notFound: {
     fontFamily: typography.body,
-    color: colors.mutedStone,
+    color: colors.inkMuted,
     padding: 40,
   },
 });
