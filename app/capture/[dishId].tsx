@@ -15,12 +15,14 @@ import {
   View,
 } from "react-native";
 import { Loader } from "../../src/components/Loader";
+import { LocationPickerSheet } from "../../src/components/LocationPickerSheet";
 import { ScreenHeader } from "../../src/components/ScreenHeader";
 import { StampAnimation } from "../../src/components/StampAnimation";
 import { StarRating } from "../../src/components/StarRating";
 import { colors, numStyle, typography } from "../../src/constants/colors";
 import { useCheckOff } from "../../src/hooks/useCheckOff";
 import { useDestinationDetail } from "../../src/hooks/useDestinationDetail";
+import { RestaurantLocation } from "../../src/types";
 
 export default function CaptureScreen() {
   const { dishId, destinationId } = useLocalSearchParams<{
@@ -35,6 +37,8 @@ export default function CaptureScreen() {
   const [photoUri, setPhotoUri] = useState<string | null>(null);
   const [rating, setRating] = useState(0);
   const [note, setNote] = useState("");
+  const [location, setLocation] = useState<RestaurantLocation | null>(null);
+  const [locationOpen, setLocationOpen] = useState(false);
   const [stamped, setStamped] = useState(false);
 
   const pickPhoto = async () => {
@@ -67,6 +71,7 @@ export default function CaptureScreen() {
         rating: rating > 0 ? rating : undefined,
         note: note.trim() || undefined,
         localPhotoUri: photoUri ?? undefined,
+        location,
       });
       setStamped(true);
       setTimeout(() => router.back(), 1200);
@@ -145,6 +150,55 @@ export default function CaptureScreen() {
           </View>
         </View>
 
+        {/* Location */}
+        <View style={styles.fieldSection}>
+          <Text style={styles.sectionLabel}>WHERE YOU TRIED IT</Text>
+          <TouchableOpacity
+            style={styles.locationCard}
+            onPress={() => setLocationOpen(true)}
+            activeOpacity={0.85}
+          >
+            <View
+              style={[
+                styles.locationIcon,
+                location ? styles.locationIconActive : null,
+              ]}
+            >
+              <MaterialCommunityIcons
+                name="map-marker-outline"
+                size={18}
+                color={location ? "#fff" : colors.primary}
+              />
+            </View>
+            <View style={{ flex: 1 }}>
+              {location ? (
+                <>
+                  <Text style={styles.locationTitle} numberOfLines={1}>
+                    {location.name}
+                  </Text>
+                  <Text style={styles.locationSub} numberOfLines={1}>
+                    {location.area
+                      ? `${location.area} · Tap to change`
+                      : "Tap to change"}
+                  </Text>
+                </>
+              ) : (
+                <>
+                  <Text style={styles.locationTitle}>Add a place</Text>
+                  <Text style={styles.locationSub}>
+                    Pin where you ate (optional)
+                  </Text>
+                </>
+              )}
+            </View>
+            <MaterialCommunityIcons
+              name="chevron-right"
+              size={18}
+              color={colors.inkMuted}
+            />
+          </TouchableOpacity>
+        </View>
+
         {/* Note */}
         <View style={styles.fieldSection}>
           <Text style={styles.sectionLabel}>ONE-LINE MEMORY</Text>
@@ -182,6 +236,16 @@ export default function CaptureScreen() {
           )}
         </View>
       </ScrollView>
+
+      <LocationPickerSheet
+        visible={locationOpen}
+        initial={location}
+        onClose={() => setLocationOpen(false)}
+        onSave={(loc) => {
+          setLocation(loc);
+          setLocationOpen(false);
+        }}
+      />
     </KeyboardAvoidingView>
   );
 }
@@ -290,6 +354,39 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
+  },
+  locationCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 18,
+    paddingVertical: 14,
+    paddingHorizontal: 14,
+  },
+  locationIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: colors.primary + "1A",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  locationIconActive: {
+    backgroundColor: colors.primary,
+  },
+  locationTitle: {
+    fontFamily: typography.bodySemiBold,
+    fontSize: 14,
+    color: colors.ink,
+  },
+  locationSub: {
+    fontFamily: typography.body,
+    fontSize: 12,
+    color: colors.inkSoft,
+    marginTop: 2,
   },
   input: {
     backgroundColor: colors.surface,

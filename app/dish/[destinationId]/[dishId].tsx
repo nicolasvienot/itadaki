@@ -1,3 +1,4 @@
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -98,6 +99,19 @@ export default function DishDetailScreen() {
                   <StarRating value={check.rating} readOnly size={20} />
                 </View>
               )}
+              {check.restaurant_name ? (
+                <View style={styles.locationRow}>
+                  <MaterialCommunityIcons
+                    name="map-marker"
+                    size={14}
+                    color={colors.primary}
+                  />
+                  <Text style={styles.locationText} numberOfLines={1}>
+                    <Text style={styles.locationName}>{check.restaurant_name}</Text>
+                    {check.restaurant_area ? ` · ${check.restaurant_area}` : ""}
+                  </Text>
+                </View>
+              ) : null}
               {check.note ? <Text style={styles.checkNote}>"{check.note}"</Text> : null}
             </View>
           )}
@@ -272,6 +286,22 @@ const styles = StyleSheet.create({
     color: colors.inkSoft,
     fontStyle: "italic",
     marginTop: 10,
+  },
+  locationRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginTop: 10,
+  },
+  locationText: {
+    flex: 1,
+    fontFamily: typography.body,
+    fontSize: 13,
+    color: colors.inkSoft,
+  },
+  locationName: {
+    fontFamily: typography.bodySemiBold,
+    color: colors.ink,
   },
   ctaWrap: {
     position: "absolute",

@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
+import { RestaurantLocation } from '../types';
 
 interface CheckOffInput {
   dishId: string;
@@ -7,6 +8,7 @@ interface CheckOffInput {
   rating?: number;
   note?: string;
   localPhotoUri?: string;
+  location?: RestaurantLocation | null;
 }
 
 export function useCheckOff() {
@@ -34,6 +36,8 @@ export function useCheckOff() {
         }
       }
 
+      const loc = input.location ?? null;
+
       const { data, error } = await supabase
         .from('dish_checks')
         .upsert(
@@ -45,6 +49,10 @@ export function useCheckOff() {
             note: input.note ?? null,
             photo_url: photoUrl ?? null,
             tried_at: new Date().toISOString(),
+            restaurant_name: loc?.name ?? null,
+            restaurant_area: loc?.area ?? null,
+            restaurant_lat: loc?.lat ?? null,
+            restaurant_lng: loc?.lng ?? null,
           },
           { onConflict: 'user_id,dish_id' }
         )

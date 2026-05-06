@@ -26,6 +26,18 @@ export interface DishCheck {
   rating?: number;
   note?: string;
   photo_url?: string;
+  restaurant_name?: string | null;
+  restaurant_area?: string | null;
+  restaurant_lat?: number | null;
+  restaurant_lng?: number | null;
+}
+
+/** Light-weight location object the picker passes around. */
+export interface RestaurantLocation {
+  name: string;
+  area?: string;
+  lat?: number;
+  lng?: number;
 }
 
 export interface Badge {
