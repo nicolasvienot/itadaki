@@ -1,12 +1,14 @@
 # Itadaki
 
-A food passport app — pick a city, eat your way through its iconic dishes, and track what you've tried.
+Pick a city. Eat your way through it.
+
+Itadaki is a mobile food passport app. Choose a destination, work through its curated list of iconic dishes, rate and photograph what you try, and earn badges as you go. Create an account to sync your progress across devices or stay anonymous — your call.
 
 ## Tech
 
 - Expo 54 / React Native
 - Expo Router (file-based navigation)
-- Supabase (anonymous auth, Postgres, Storage)
+- Supabase (anonymous auth + email/password signup, Postgres, Storage)
 - TanStack React Query
 - Zustand
 
@@ -17,14 +19,13 @@ A food passport app — pick a city, eat your way through its iconic dishes, and
    yarn install
    ```
 
-2. Create a `.env.local` at the root:
-   ```
-   EXPO_PUBLIC_SUPABASE_URL=your_supabase_url
-   EXPO_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
+2. Copy `.env.example` to `.env.local` and fill in your values:
+   ```bash
+   cp .env.example .env.local
    ```
 
 3. In your Supabase project:
-   - Enable **Anonymous sign-ins** (Authentication → Providers)
+   - Enable **Anonymous sign-ins** and **Email/Password** (Authentication → Providers)
    - Run the migrations in `supabase/migrations/` in order
    - Create a public storage bucket named `dish-photos`
 
