@@ -13,7 +13,8 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { colors, typography } from "../src/constants/colors";
 
-const WELCOME_HERO_IMAGE = "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=1200&q=90";
+const WELCOME_HERO_IMAGE =
+  "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=1200&q=90";
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -22,7 +23,8 @@ interface BeforeInstallPromptEvent extends Event {
 
 export default function Welcome() {
   const router = useRouter();
-  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
+  const [deferredPrompt, setDeferredPrompt] =
+    useState<BeforeInstallPromptEvent | null>(null);
   const [isIOS, setIsIOS] = useState(false);
   const [isStandalone, setIsStandalone] = useState(false);
 
@@ -105,7 +107,9 @@ export default function Welcome() {
 
         {/* Center content */}
         <View style={styles.centerSection}>
-          <Text style={styles.heroTitle}>Your culinary{"\n"}passport awaits</Text>
+          <Text style={styles.heroTitle}>
+            Your culinary{"\n"}passport awaits
+          </Text>
           <Text style={styles.heroSub}>
             Track the local dishes you've tried.{"\n"}
             Build your food journey, city by city.
@@ -134,15 +138,21 @@ export default function Welcome() {
                   <Ionicons name="share-outline" size={22} color="#fff" />
                 </View>
                 <Text style={styles.iosText}>
-                  Tap the <Text style={styles.iosBold}>Share</Text> button below
+                  Tap the <Text style={styles.iosBold}>Share</Text> button on
+                  top of the page
                 </Text>
               </View>
               <View style={styles.iosStep}>
                 <View style={styles.iosIconWrap}>
-                  <MaterialCommunityIcons name="plus-box-outline" size={22} color="#fff" />
+                  <MaterialCommunityIcons
+                    name="plus-box-outline"
+                    size={22}
+                    color="#fff"
+                  />
                 </View>
                 <Text style={styles.iosText}>
-                  Then tap <Text style={styles.iosBold}>Add to Home Screen</Text>
+                  Then tap{" "}
+                  <Text style={styles.iosBold}>Add to Home Screen</Text>
                 </Text>
               </View>
             </View>
@@ -151,7 +161,11 @@ export default function Welcome() {
           {/* Desktop or fallback */}
           {!isIOS && !deferredPrompt && (
             <View style={styles.desktopNote}>
-              <Ionicons name="phone-portrait-outline" size={18} color="rgba(255,255,255,0.7)" />
+              <Ionicons
+                name="phone-portrait-outline"
+                size={18}
+                color="rgba(255,255,255,0.7)"
+              />
               <Text style={styles.desktopNoteText}>
                 Open on your phone to install
               </Text>
@@ -165,7 +179,11 @@ export default function Welcome() {
             activeOpacity={0.8}
           >
             <Text style={styles.continueText}>Continue in browser</Text>
-            <MaterialCommunityIcons name="chevron-right" size={18} color="rgba(255,255,255,0.8)" />
+            <MaterialCommunityIcons
+              name="chevron-right"
+              size={18}
+              color="rgba(255,255,255,0.8)"
+            />
           </TouchableOpacity>
         </View>
       </SafeAreaView>
