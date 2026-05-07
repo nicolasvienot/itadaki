@@ -31,7 +31,12 @@
     "web": {
       "bundler": "metro",
       "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/images/favicon.png",
+      "name": "Itadaki",
+      "shortName": "Itadaki",
+      "description": "Track the dishes you've tried around the world",
+      "themeColor": "#F5EFE0",
+      "backgroundColor": "#F5EFE0"
     },
     "plugins": [
       "expo-router",
