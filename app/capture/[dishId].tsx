@@ -265,7 +265,9 @@ export default function CaptureScreen() {
 
           {checkOff.isError && (
             <Text style={styles.error}>
-              Something went wrong — check your Supabase connection.
+              {checkOff.error instanceof Error
+                ? checkOff.error.message
+                : "Something went wrong — check your Supabase connection."}
             </Text>
           )}
         </View>

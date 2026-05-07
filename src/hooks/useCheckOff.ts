@@ -25,18 +25,26 @@ export function useCheckOff() {
       let photoUrl: string | null | undefined = input.existingPhotoUrl ?? undefined;
 
       if (input.localPhotoUri) {
-        const path = `${user.id}/${input.dishId}_${Date.now()}.jpg`;
-        const response = await fetch(input.localPhotoUri);
-        const blob = await response.blob();
+        // RN's `Blob` from fetch is unreliable for binary uploads — Supabase ends up
+        // storing a 0-byte file. Read the file into an ArrayBuffer and upload that.
+        const arrayBuffer = await fetch(input.localPhotoUri).then((res) =>
+          res.arrayBuffer()
+        );
 
+        const path = `${user.id}/${input.dishId}_${Date.now()}.jpg`;
         const { error: uploadError } = await supabase.storage
           .from('dish-photos')
-          .upload(path, blob, { contentType: 'image/jpeg', upsert: true });
+          .upload(path, arrayBuffer, {
+            contentType: 'image/jpeg',
+            upsert: true,
+          });
 
-        if (!uploadError) {
-          const { data } = supabase.storage.from('dish-photos').getPublicUrl(path);
-          photoUrl = data.publicUrl;
+        if (uploadError) {
+          throw new Error(`Photo upload failed: ${uploadError.message}`);
         }
+
+        const { data } = supabase.storage.from('dish-photos').getPublicUrl(path);
+        photoUrl = data.publicUrl;
       }
 
       const loc = input.location ?? null;
