@@ -4,6 +4,7 @@
   "description": "Track the dishes you've tried around the world",
   "start_url": "/",
   "display": "standalone",
+  "display_override": ["standalone", "fullscreen"],
   "background_color": "#F5EFE0",
   "theme_color": "#F5EFE0",
   "orientation": "portrait",

@@ -1,4 +1,3 @@
-import { ScrollViewStyleReset } from 'expo-router/html';
 import type { PropsWithChildren } from 'react';
 
 export default function Root({ children }: PropsWithChildren) {
@@ -31,24 +30,22 @@ export default function Root({ children }: PropsWithChildren) {
         {/* Prevent auto-formatting */}
         <meta name="format-detection" content="telephone=no" />
 
-        <ScrollViewStyleReset />
-
+        {/* 
+          Custom styles for iOS PWA fullscreen.
+          We don't use ScrollViewStyleReset because it conflicts with PWA fullscreen.
+        */}
         <style dangerouslySetInnerHTML={{ __html: `
           /* Reset */
           *, *::before, *::after {
             box-sizing: border-box;
           }
           
-          html, body {
-            margin: 0;
-            padding: 0;
-            background-color: #F5EFE0;
-            overflow: hidden;
-            overscroll-behavior: none;
-            -webkit-text-size-adjust: 100%;
-          }
-          
-          /* iOS PWA: use fixed positioning to fill entire screen including safe areas */
+          /* 
+           * iOS PWA Fullscreen Fix
+           * The trick is to use position:fixed on html to cover the entire screen
+           * including the area behind the home indicator (safe area).
+           * Then body and #root fill that space.
+           */
           html {
             position: fixed;
             top: 0;
@@ -57,26 +54,31 @@ export default function Root({ children }: PropsWithChildren) {
             bottom: 0;
             width: 100%;
             height: 100%;
+            overflow: hidden;
+            background-color: #F5EFE0;
+            -webkit-text-size-adjust: 100%;
           }
           
           body {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
+            margin: 0;
+            padding: 0;
             width: 100%;
             height: 100%;
+            overflow: hidden;
+            overscroll-behavior: none;
+            background-color: #F5EFE0;
+            -webkit-overflow-scrolling: touch;
+            text-rendering: optimizeLegibility;
+            -webkit-font-smoothing: antialiased;
           }
           
           #root {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
             display: flex;
             flex-direction: column;
+            flex: 1;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
           }
         `}} />
       </head>
