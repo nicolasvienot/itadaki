@@ -43,7 +43,9 @@ export default function PassportScreen() {
   if (isError) {
     return (
       <SafeAreaView style={styles.safe}>
-        <Text style={styles.loading}>Couldn't load your passport. Check your connection.</Text>
+        <Text style={styles.loading}>
+          Couldn't load your passport. Check your connection.
+        </Text>
       </SafeAreaView>
     );
   }
@@ -68,7 +70,7 @@ export default function PassportScreen() {
         <View style={styles.titleRow}>
           <View style={{ flex: 1 }}>
             <Text style={styles.title}>Food passport</Text>
-            <Text style={styles.sub}>Your edible record of the world.</Text>
+            <Text style={styles.sub}>Your edible record of the world</Text>
           </View>
           <TouchableOpacity
             style={styles.gearBtn}
@@ -76,7 +78,11 @@ export default function PassportScreen() {
             hitSlop={8}
             activeOpacity={0.85}
           >
-            <MaterialCommunityIcons name="cog-outline" size={20} color={colors.ink} />
+            <MaterialCommunityIcons
+              name="cog-outline"
+              size={20}
+              color={colors.ink}
+            />
           </TouchableOpacity>
         </View>
 
@@ -90,7 +96,11 @@ export default function PassportScreen() {
             ].map((s, i, arr) => (
               <View key={s.label} style={styles.statsItemRow}>
                 <View style={styles.statsItem}>
-                  <Text style={[numStyle(36, colors.ink), { textAlign: "center" }]}>{s.num}</Text>
+                  <Text
+                    style={[numStyle(36, colors.ink), { textAlign: "center" }]}
+                  >
+                    {s.num}
+                  </Text>
                   <Text style={styles.statsItemLabel}>{s.label}</Text>
                 </View>
                 {i < arr.length - 1 && <View style={styles.statsDivider} />}
@@ -126,7 +136,11 @@ export default function PassportScreen() {
                         {dest.triedCount} of {dest.totalCount} dishes
                       </Text>
                       <Text style={styles.destStatsText}>
-                        {Math.round((dest.triedCount / Math.max(1, dest.totalCount)) * 100)}%
+                        {Math.round(
+                          (dest.triedCount / Math.max(1, dest.totalCount)) *
+                            100,
+                        )}
+                        %
                       </Text>
                     </View>
                   </View>
@@ -154,7 +168,11 @@ export default function PassportScreen() {
             activeOpacity={0.85}
           >
             <Text style={styles.shareBtnText}>Share my passport</Text>
-            <MaterialCommunityIcons name="arrow-up" size={16} color={colors.bg} />
+            <MaterialCommunityIcons
+              name="arrow-up"
+              size={16}
+              color={colors.bg}
+            />
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -163,7 +181,10 @@ export default function PassportScreen() {
       {shareVisible && (
         <View style={styles.offscreen} pointerEvents="none">
           <ViewShot ref={cardRef} options={{ format: "png", quality: 1 }}>
-            <PassportShareCard stats={stats} ownerName={user?.email?.split("@")[0] ?? "You"} />
+            <PassportShareCard
+              stats={stats}
+              ownerName={user?.email?.split("@")[0] ?? "You"}
+            />
           </ViewShot>
         </View>
       )}

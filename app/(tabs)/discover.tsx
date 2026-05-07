@@ -35,18 +35,22 @@ export default function DiscoverScreen() {
     return destinations.filter(
       (d) =>
         d.name.toLowerCase().includes(trimmed) ||
-        d.country.toLowerCase().includes(trimmed)
+        d.country.toLowerCase().includes(trimmed),
     );
   }, [destinations, trimmed]);
 
-  const currentDestination = destinations.find((d) => d.id === activeDestinationId);
+  const currentDestination = destinations.find(
+    (d) => d.id === activeDestinationId,
+  );
   const inProgress = destinations.filter((d) => {
     const progress = progressMap.get(d.id);
     return d.id !== activeDestinationId && progress && progress.triedCount > 0;
   });
   const newMissions = destinations.filter((d) => {
     const progress = progressMap.get(d.id);
-    return d.id !== activeDestinationId && (!progress || progress.triedCount === 0);
+    return (
+      d.id !== activeDestinationId && (!progress || progress.triedCount === 0)
+    );
   });
 
   return (
@@ -58,13 +62,17 @@ export default function DiscoverScreen() {
       >
         <View style={styles.header}>
           <Text style={styles.title}>Discover</Text>
-          <Text style={styles.sub}>Switch cities or set a new mission.</Text>
+          <Text style={styles.sub}>Switch cities or set a new mission</Text>
         </View>
 
         {/* Search */}
         <View style={styles.searchWrap}>
           <View style={styles.search}>
-            <MaterialCommunityIcons name="magnify" size={18} color={colors.inkMuted} />
+            <MaterialCommunityIcons
+              name="magnify"
+              size={18}
+              color={colors.inkMuted}
+            />
             <TextInput
               style={styles.searchInput}
               value={query}
@@ -113,59 +121,62 @@ export default function DiscoverScreen() {
           </View>
         ) : (
           <>
-
-        {currentDestination && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>NOW EXPLORING</Text>
-            <View style={styles.featuredWrap}>
-              <DestinationCard
-                destination={currentDestination}
-                triedCount={progressMap.get(currentDestination.id)?.triedCount ?? 0}
-                onPress={() => router.push(`/destination/${currentDestination.id}`)}
-                current
-              />
-            </View>
-          </View>
-        )}
-
-        {inProgress.length > 0 && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>IN PROGRESS</Text>
-            <View style={styles.rowList}>
-              {inProgress.map((dest) => {
-                const progress = progressMap.get(dest.id);
-                return (
-                  <DestinationCardWithProgress
-                    key={dest.id}
-                    destination={dest}
-                    triedCount={progress?.triedCount ?? 0}
-                    totalCount={dest.dishes.length}
-                    onPress={() => router.push(`/destination/${dest.id}`)}
-                  />
-                );
-              })}
-            </View>
-          </View>
-        )}
-
-        {newMissions.length > 0 && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>NEW MISSIONS</Text>
-            <View style={styles.grid}>
-              {newMissions.map((dest) => (
-                <View key={dest.id} style={styles.gridItem}>
-                  <DestinationCardWithProgress
-                    destination={dest}
-                    triedCount={0}
-                    totalCount={dest.dishes.length}
-                    onPress={() => router.push(`/destination/${dest.id}`)}
-                    tile
+            {currentDestination && (
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>NOW EXPLORING</Text>
+                <View style={styles.featuredWrap}>
+                  <DestinationCard
+                    destination={currentDestination}
+                    triedCount={
+                      progressMap.get(currentDestination.id)?.triedCount ?? 0
+                    }
+                    onPress={() =>
+                      router.push(`/destination/${currentDestination.id}`)
+                    }
+                    current
                   />
                 </View>
-              ))}
-            </View>
-          </View>
-        )}
+              </View>
+            )}
+
+            {inProgress.length > 0 && (
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>IN PROGRESS</Text>
+                <View style={styles.rowList}>
+                  {inProgress.map((dest) => {
+                    const progress = progressMap.get(dest.id);
+                    return (
+                      <DestinationCardWithProgress
+                        key={dest.id}
+                        destination={dest}
+                        triedCount={progress?.triedCount ?? 0}
+                        totalCount={dest.dishes.length}
+                        onPress={() => router.push(`/destination/${dest.id}`)}
+                      />
+                    );
+                  })}
+                </View>
+              </View>
+            )}
+
+            {newMissions.length > 0 && (
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>NEW MISSIONS</Text>
+                <View style={styles.grid}>
+                  {newMissions.map((dest) => (
+                    <View key={dest.id} style={styles.gridItem}>
+                      <DestinationCardWithProgress
+                        destination={dest}
+                        triedCount={0}
+                        totalCount={dest.dishes.length}
+                        onPress={() => router.push(`/destination/${dest.id}`)}
+                        tile
+                      />
+                    </View>
+                  ))}
+                </View>
+              </View>
+            )}
           </>
         )}
       </ScrollView>
