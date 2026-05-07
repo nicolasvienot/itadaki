@@ -9,11 +9,11 @@ import {
   Text,
   TouchableOpacity,
   View,
-  useWindowDimensions,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { colors, typography } from "../src/constants/colors";
-import { useDestinations } from "../src/hooks/useDestinations";
+
+const WELCOME_HERO_IMAGE = "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=1200&q=90";
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -22,8 +22,6 @@ interface BeforeInstallPromptEvent extends Event {
 
 export default function Welcome() {
   const router = useRouter();
-  const { width } = useWindowDimensions();
-  const { data: destinations = [] } = useDestinations();
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [isIOS, setIsIOS] = useState(false);
   const [isStandalone, setIsStandalone] = useState(false);
@@ -84,26 +82,19 @@ export default function Welcome() {
     return null;
   }
 
-  const heroImage = destinations[0]?.coverPhotoUrl;
-
   return (
     <View style={styles.container}>
       {/* Background image */}
-      {heroImage && (
-        <>
-          <Image
-            source={{ uri: heroImage }}
-            style={StyleSheet.absoluteFill}
-            contentFit="cover"
-            priority="high"
-            cachePolicy="memory-disk"
-          />
-          <LinearGradient
-            colors={["rgba(0,0,0,0.3)", "rgba(0,0,0,0.7)"]}
-            style={StyleSheet.absoluteFill}
-          />
-        </>
-      )}
+      <Image
+        source={{ uri: WELCOME_HERO_IMAGE }}
+        style={StyleSheet.absoluteFill}
+        contentFit="cover"
+        priority="high"
+      />
+      <LinearGradient
+        colors={["rgba(0,0,0,0.3)", "rgba(0,0,0,0.7)"]}
+        style={StyleSheet.absoluteFill}
+      />
 
       <SafeAreaView style={styles.safe}>
         {/* Top brand */}
