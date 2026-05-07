@@ -1,10 +1,29 @@
 import 'react-native-url-polyfill/auto';
+import { Platform } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
 import { createClient } from '@supabase/supabase-js';
 
+// Web uses localStorage
+const WebStorageAdapter = {
+  getItem: async (key: string): Promise<string | null> => {
+    if (typeof localStorage === 'undefined') return null;
+    return localStorage.getItem(key);
+  },
+  setItem: async (key: string, value: string): Promise<void> => {
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem(key, value);
+    }
+  },
+  removeItem: async (key: string): Promise<void> => {
+    if (typeof localStorage !== 'undefined') {
+      localStorage.removeItem(key);
+    }
+  },
+};
+
 // SecureStore has a 2KB value limit; Supabase JWTs can exceed that,
 // so we chunk large values across multiple keys.
-const SecureStoreAdapter = {
+const NativeStorageAdapter = {
   getItem: async (key: string): Promise<string | null> => {
     const n = await SecureStore.getItemAsync(`${key}_n`);
     if (!n) return SecureStore.getItemAsync(key);
@@ -44,12 +63,14 @@ const SecureStoreAdapter = {
   },
 };
 
+const StorageAdapter = Platform.OS === 'web' ? WebStorageAdapter : NativeStorageAdapter;
+
 const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL ?? '';
 const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? '';
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
-    storage: SecureStoreAdapter,
+    storage: StorageAdapter,
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: false,
