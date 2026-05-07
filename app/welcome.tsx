@@ -95,6 +95,8 @@ export default function Welcome() {
             source={{ uri: heroImage }}
             style={StyleSheet.absoluteFill}
             contentFit="cover"
+            priority="high"
+            cachePolicy="memory-disk"
           />
           <LinearGradient
             colors={["rgba(0,0,0,0.3)", "rgba(0,0,0,0.7)"]}
