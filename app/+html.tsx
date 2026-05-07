@@ -34,25 +34,49 @@ export default function Root({ children }: PropsWithChildren) {
         <ScrollViewStyleReset />
 
         <style dangerouslySetInnerHTML={{ __html: `
-          html {
-            height: 100%;
+          /* Reset */
+          *, *::before, *::after {
+            box-sizing: border-box;
           }
-          body {
+          
+          html, body {
             margin: 0;
             padding: 0;
-            min-height: 100%;
-            height: 100%;
             background-color: #F5EFE0;
             overflow: hidden;
             overscroll-behavior: none;
-            -webkit-overflow-scrolling: touch;
+            -webkit-text-size-adjust: 100%;
           }
+          
+          /* iOS PWA: use fixed positioning to fill entire screen including safe areas */
+          html {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            width: 100%;
+            height: 100%;
+          }
+          
+          body {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            width: 100%;
+            height: 100%;
+          }
+          
           #root {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
             display: flex;
             flex-direction: column;
-            min-height: 100%;
-            min-height: 100dvh;
-            min-height: -webkit-fill-available;
           }
         `}} />
       </head>

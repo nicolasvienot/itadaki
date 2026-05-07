@@ -14,7 +14,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { colors, typography } from "../src/constants/colors";
 
 const WELCOME_HERO_IMAGE =
-  "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=1200&q=90";
+  "https://images.unsplash.com/photo-1590559899731-a382839e5549";
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -171,20 +171,6 @@ export default function Welcome() {
               </Text>
             </View>
           )}
-
-          {/* Continue link */}
-          <TouchableOpacity
-            style={styles.continueButton}
-            onPress={handleContinue}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.continueText}>Continue in browser</Text>
-            <MaterialCommunityIcons
-              name="chevron-right"
-              size={18}
-              color="rgba(255,255,255,0.8)"
-            />
-          </TouchableOpacity>
         </View>
       </SafeAreaView>
     </View>
