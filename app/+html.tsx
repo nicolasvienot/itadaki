@@ -32,15 +32,25 @@ export default function Root({ children }: PropsWithChildren) {
         <ScrollViewStyleReset />
 
         <style dangerouslySetInnerHTML={{ __html: `
-          html, body, #root {
+          html {
             height: 100%;
-            margin: 0;
-            padding: 0;
-            background-color: #F5EFE0;
           }
           body {
+            margin: 0;
+            padding: 0;
+            min-height: 100%;
+            height: 100%;
+            background-color: #F5EFE0;
             overflow: hidden;
             overscroll-behavior: none;
+            -webkit-overflow-scrolling: touch;
+          }
+          #root {
+            display: flex;
+            flex-direction: column;
+            min-height: 100%;
+            min-height: 100dvh;
+            min-height: -webkit-fill-available;
           }
         `}} />
       </head>
