@@ -8,7 +8,7 @@ export default function Root({ children }: PropsWithChildren) {
         <meta httpEquiv="X-UA-Compatible" content="IE=edge" />
         <meta
           name="viewport"
-          content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"
+          content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
         />
 
         {/* PWA iOS fullscreen */}
@@ -31,29 +31,22 @@ export default function Root({ children }: PropsWithChildren) {
         <meta name="format-detection" content="telephone=no" />
 
         {/* 
-          Custom styles for iOS PWA fullscreen.
-          We don't use ScrollViewStyleReset because it conflicts with PWA fullscreen.
+          iOS PWA Fullscreen Fix
+          - 100dvh is WRONG in standalone mode (subtracts safe area incorrectly)
+          - 100vh is CORRECT in standalone mode (equals full screen)
+          - Use CSS variable with JS override for standalone detection
         */}
         <style dangerouslySetInnerHTML={{ __html: `
-          /* Reset */
           *, *::before, *::after {
             box-sizing: border-box;
           }
           
-          /* 
-           * iOS PWA Fullscreen Fix
-           * The trick is to use position:fixed on html to cover the entire screen
-           * including the area behind the home indicator (safe area).
-           * Then body and #root fill that space.
-           */
+          :root {
+            --app-height: 100dvh;
+          }
+          
           html {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            width: 100%;
-            height: 100%;
+            height: var(--app-height, 100dvh);
             overflow: hidden;
             background-color: #F5EFE0;
             -webkit-text-size-adjust: 100%;
@@ -62,7 +55,6 @@ export default function Root({ children }: PropsWithChildren) {
           body {
             margin: 0;
             padding: 0;
-            width: 100%;
             height: 100%;
             overflow: hidden;
             overscroll-behavior: none;
@@ -76,10 +68,25 @@ export default function Root({ children }: PropsWithChildren) {
             display: flex;
             flex-direction: column;
             flex: 1;
-            width: 100%;
             height: 100%;
             overflow: hidden;
           }
+        `}} />
+
+        {/* JS: Override to 100vh in standalone PWA mode */}
+        <script dangerouslySetInnerHTML={{ __html: `
+          (function() {
+            // Detect iOS standalone mode
+            var isStandalone = window.navigator.standalone === true || 
+                               window.matchMedia('(display-mode: standalone)').matches;
+            var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+            
+            if (isStandalone && isIOS) {
+              // In iOS standalone mode, 100vh is correct (equals full screen)
+              // 100dvh is wrong (subtracts safe area incorrectly)
+              document.documentElement.style.setProperty('--app-height', '100vh');
+            }
+          })();
         `}} />
       </head>
       <body>{children}</body>
