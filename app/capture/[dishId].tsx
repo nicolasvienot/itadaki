@@ -2,7 +2,7 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -32,6 +32,7 @@ export default function CaptureScreen() {
   const router = useRouter();
   const { destination, checks, isLoading } = useDestinationDetail(destinationId);
   const dish = destination?.dishes.find((d) => d.id === dishId);
+  const existingCheck = checks[dishId];
   const checkOff = useCheckOff();
 
   const [photoUri, setPhotoUri] = useState<string | null>(null);
@@ -40,6 +41,24 @@ export default function CaptureScreen() {
   const [location, setLocation] = useState<RestaurantLocation | null>(null);
   const [locationOpen, setLocationOpen] = useState(false);
   const [stamped, setStamped] = useState(false);
+
+  // Seed form from an existing check (edit flow). Runs once when the check loads.
+  const seededRef = useRef(false);
+  useEffect(() => {
+    if (seededRef.current || !existingCheck) return;
+    seededRef.current = true;
+    setRating(existingCheck.rating ?? 0);
+    setNote(existingCheck.note ?? "");
+    setPhotoUri(existingCheck.photo_url ?? null);
+    if (existingCheck.restaurant_name) {
+      setLocation({
+        name: existingCheck.restaurant_name,
+        area: existingCheck.restaurant_area ?? undefined,
+        lat: existingCheck.restaurant_lat ?? undefined,
+        lng: existingCheck.restaurant_lng ?? undefined,
+      });
+    }
+  }, [existingCheck]);
 
   const pickPhoto = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -64,13 +83,17 @@ export default function CaptureScreen() {
 
   const handleSave = async () => {
     if (!dish) return;
+    // Remote URLs (already-uploaded photos kept from a prior save) start with http(s).
+    // Anything else (file://, content://, ph://) is a freshly-picked local photo to upload.
+    const isRemote = !!photoUri && /^https?:\/\//.test(photoUri);
     try {
       await checkOff.mutateAsync({
         dishId: dish.id,
         destinationId: dish.destinationId,
         rating: rating > 0 ? rating : undefined,
         note: note.trim() || undefined,
-        localPhotoUri: photoUri ?? undefined,
+        localPhotoUri: photoUri && !isRemote ? photoUri : undefined,
+        existingPhotoUrl: isRemote ? photoUri : undefined,
         location,
       });
       setStamped(true);

@@ -7,7 +7,10 @@ interface CheckOffInput {
   destinationId: string;
   rating?: number;
   note?: string;
+  /** A new photo on disk to upload. Takes priority over existingPhotoUrl. */
   localPhotoUri?: string;
+  /** Already-uploaded remote URL to keep (when user didn't pick a new photo). */
+  existingPhotoUrl?: string | null;
   location?: RestaurantLocation | null;
 }
 
@@ -19,7 +22,7 @@ export function useCheckOff() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
-      let photoUrl: string | undefined;
+      let photoUrl: string | null | undefined = input.existingPhotoUrl ?? undefined;
 
       if (input.localPhotoUri) {
         const path = `${user.id}/${input.dishId}_${Date.now()}.jpg`;
