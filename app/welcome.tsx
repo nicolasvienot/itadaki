@@ -21,11 +21,38 @@ interface BeforeInstallPromptEvent extends Event {
   userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
 }
 
+// Detect if running in an in-app browser (WebView)
+function isInAppBrowser(): boolean {
+  if (typeof window === "undefined") return false;
+  const ua = navigator.userAgent || navigator.vendor || "";
+  // Common in-app browser indicators
+  return (
+    /FBAN|FBAV|Instagram|Messenger|Twitter|Line|WhatsApp|Snapchat|LinkedIn/i.test(
+      ua
+    ) ||
+    // Generic WebView detection
+    /wv\)/.test(ua) ||
+    // Android WebView
+    (/Android/.test(ua) && /Version\/[\d.]+/.test(ua) && !/Chrome/.test(ua))
+  );
+}
+
+// Detect if on mobile device
+function isMobileDevice(): boolean {
+  if (typeof window === "undefined") return false;
+  return /Android|iPhone|iPad|iPod|webOS|BlackBerry|IEMobile|Opera Mini/i.test(
+    navigator.userAgent
+  );
+}
+
 export default function Welcome() {
   const router = useRouter();
   const [deferredPrompt, setDeferredPrompt] =
     useState<BeforeInstallPromptEvent | null>(null);
   const [isIOS, setIsIOS] = useState(false);
+  const [isAndroid, setIsAndroid] = useState(false);
+  const [isInApp, setIsInApp] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const [isStandalone, setIsStandalone] = useState(false);
 
   // Redirect to main app on native platforms
@@ -50,9 +77,13 @@ export default function Welcome() {
       return;
     }
 
-    // Check if iOS
+    // Check platform
     const ios = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    const android = /Android/.test(navigator.userAgent);
     setIsIOS(ios);
+    setIsAndroid(android);
+    setIsInApp(isInAppBrowser());
+    setIsMobile(isMobileDevice());
 
     // Listen for install prompt (Chrome/Android)
     const handler = (e: Event) => {
@@ -118,8 +149,37 @@ export default function Welcome() {
 
         {/* Bottom actions */}
         <View style={styles.bottomSection}>
+          {/* In-app browser (Messenger, Facebook, etc.): Instructions to open in real browser */}
+          {isInApp && (
+            <View style={styles.iosInstructions}>
+              <View style={styles.iosStep}>
+                <View style={styles.iosIconWrap}>
+                  <Ionicons name="ellipsis-horizontal" size={22} color="#fff" />
+                </View>
+                <Text style={styles.iosText}>
+                  Tap the <Text style={styles.iosBold}>menu</Text> (⋯) at the
+                  top right
+                </Text>
+              </View>
+              <View style={styles.iosStep}>
+                <View style={styles.iosIconWrap}>
+                  <Ionicons name="globe-outline" size={22} color="#fff" />
+                </View>
+                <Text style={styles.iosText}>
+                  Select{" "}
+                  <Text style={styles.iosBold}>
+                    Open in {isIOS ? "Safari" : "Chrome"}
+                  </Text>
+                </Text>
+              </View>
+              <Text style={styles.inAppNote}>
+                PWA installation requires a real browser
+              </Text>
+            </View>
+          )}
+
           {/* Android/Chrome: Install button */}
-          {deferredPrompt && (
+          {!isInApp && deferredPrompt && (
             <TouchableOpacity
               style={styles.installButton}
               onPress={handleInstall}
@@ -130,8 +190,8 @@ export default function Welcome() {
             </TouchableOpacity>
           )}
 
-          {/* iOS: Instructions */}
-          {isIOS && !deferredPrompt && (
+          {/* iOS (not in-app): Instructions */}
+          {!isInApp && isIOS && !deferredPrompt && (
             <View style={styles.iosInstructions}>
               <View style={styles.iosStep}>
                 <View style={styles.iosIconWrap}>
@@ -158,8 +218,39 @@ export default function Welcome() {
             </View>
           )}
 
-          {/* Desktop or fallback */}
-          {!isIOS && !deferredPrompt && (
+          {/* Android without install prompt (rare browser): Manual instructions */}
+          {!isInApp && isAndroid && !deferredPrompt && (
+            <View style={styles.iosInstructions}>
+              <View style={styles.iosStep}>
+                <View style={styles.iosIconWrap}>
+                  <Ionicons
+                    name="ellipsis-vertical"
+                    size={22}
+                    color="#fff"
+                  />
+                </View>
+                <Text style={styles.iosText}>
+                  Tap the <Text style={styles.iosBold}>menu</Text> (⋮) in Chrome
+                </Text>
+              </View>
+              <View style={styles.iosStep}>
+                <View style={styles.iosIconWrap}>
+                  <MaterialCommunityIcons
+                    name="plus-box-outline"
+                    size={22}
+                    color="#fff"
+                  />
+                </View>
+                <Text style={styles.iosText}>
+                  Select{" "}
+                  <Text style={styles.iosBold}>Add to Home screen</Text>
+                </Text>
+              </View>
+            </View>
+          )}
+
+          {/* Desktop: Open on phone */}
+          {!isInApp && !isMobile && !deferredPrompt && (
             <View style={styles.desktopNote}>
               <Ionicons
                 name="phone-portrait-outline"
@@ -265,6 +356,13 @@ const styles = StyleSheet.create({
   iosBold: {
     fontFamily: typography.bodySemiBold,
     color: "#fff",
+  },
+  inAppNote: {
+    fontFamily: typography.body,
+    fontSize: 13,
+    color: "rgba(255,255,255,0.5)",
+    textAlign: "center",
+    marginTop: 8,
   },
   desktopNote: {
     flexDirection: "row",
