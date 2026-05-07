@@ -1,0 +1,23 @@
+{
+  "name": "Itadaki",
+  "short_name": "Itadaki",
+  "description": "Track the dishes you've tried around the world",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F5EFE0",
+  "theme_color": "#F5EFE0",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/assets/images/icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/assets/images/icon.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    }
+  ]
+}

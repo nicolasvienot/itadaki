@@ -16,10 +16,15 @@ export default function Root({ children }: PropsWithChildren) {
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="apple-mobile-web-app-title" content="Itadaki" />
+        <link rel="apple-touch-icon" href="/assets/images/icon.png" />
+        <link rel="apple-touch-icon" sizes="180x180" href="/assets/images/icon.png" />
 
         {/* PWA Android */}
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="theme-color" content="#F5EFE0" />
+        
+        {/* PWA Manifest */}
+        <link rel="manifest" href="/manifest.json" />
 
         {/* Prevent auto-formatting */}
         <meta name="format-detection" content="telephone=no" />
