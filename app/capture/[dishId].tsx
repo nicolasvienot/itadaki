@@ -14,10 +14,10 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { CheckoffSuccess } from "../../src/components/CheckoffSuccess";
 import { Loader } from "../../src/components/Loader";
 import { LocationPickerSheet } from "../../src/components/LocationPickerSheet";
 import { ScreenHeader } from "../../src/components/ScreenHeader";
-import { StampAnimation } from "../../src/components/StampAnimation";
 import { StarRating } from "../../src/components/StarRating";
 import { colors, numStyle, typography } from "../../src/constants/colors";
 import { useCheckOff } from "../../src/hooks/useCheckOff";
@@ -30,7 +30,7 @@ export default function CaptureScreen() {
     destinationId: string;
   }>();
   const router = useRouter();
-  const { destination, isLoading } = useDestinationDetail(destinationId);
+  const { destination, checks, isLoading } = useDestinationDetail(destinationId);
   const dish = destination?.dishes.find((d) => d.id === dishId);
   const checkOff = useCheckOff();
 
@@ -74,14 +74,27 @@ export default function CaptureScreen() {
         location,
       });
       setStamped(true);
-      setTimeout(() => router.back(), 1200);
     } catch {
       // error displayed via checkOff.isError in the UI
     }
   };
 
   if (isLoading) return <Loader />;
-  if (!dish) return null;
+  if (!dish || !destination) return null;
+
+  // Success takeover — mounts after a successful save.
+  if (stamped) {
+    const triedNow = Object.keys(checks).length + (checks[dish.id] ? 0 : 1);
+    return (
+      <CheckoffSuccess
+        dishName={dish.name}
+        destinationName={destination.name}
+        triedCount={triedNow}
+        totalCount={destination.dishes.length}
+        onDone={() => router.back()}
+      />
+    );
+  }
 
   return (
     <KeyboardAvoidingView
@@ -109,8 +122,6 @@ export default function CaptureScreen() {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <StampAnimation visible={stamped} size={140} />
-
         {/* Dish ID */}
         <View style={styles.dishHeader}>
           <Text style={styles.localName}>
